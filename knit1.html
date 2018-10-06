@@ -1,0 +1,527 @@
+<html>
+
+<head>
+<style type="text/css">
+.knitr .inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage .left {
+  text-align: left;
+}
+.rimage .right {
+  text-align: right;
+}
+.rimage .center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Project #1: Pregnancy Due Dates</title>
+</head>
+
+<body>
+<p>
+#author:  Group7
+#name:    Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, & Griffin Parr
+</p>
+
+<p>
+The setting for this project is to work with survey data from a popular (using the term loosely) pregnancy data website. Although the data are in a convenient format (download the .csv here: https://spacefem.com/pregnant/charts/duedate40.php ), this project will require you to transform variables and to bypass defaults in some functions that you should already be familiar with from Nick Reinholtz’s class. Not every task will be familiar. For example, I expect you will need to spend some time debugging plotting commands.
+</p>
+<p>
+There are two deliverables for this project.
+1. A well-commented and debugged script (.R file) that produces requested plots and calculations in response to the prompts below.
+2. A brief write up of the answers to the questions in the prompts below (standard word processing format or pdf). The write up should be brief, but professional. Think of your audience as a non- technically oriented manager who wants to know the answers to the questions posed below. Accordingly, you should keep the write up free of “technical” details (i.e., “Our group then used lines() because it does not produce a new plot object, allowing us to plot the normal density curve on the same plot as the data.”), but it should have plenty of contextual detail (i.e., “As you can see from Figure 4, there is not much difference between the distributions of gestational periods for firstborn children and children of mothers who have previously had children.”)
+</p>
+
+<p>
+Data Processing.
+Project Instructions.
+  1. Download the data to the working directory you will use for this project. Use the link above to navigate to the data. Within your script, set the working directory in order to shorten the path.
+2. Read in the data (using read.csv()).
+3. Use the “names()” function applied to your data frame object to inspect the names of the
+variables in the data. Save as a separate data frame a slimmer data frame that contains only information on the following variables: id, motherbirthyear, multiples, pounds, bornonday, duedatebase, induced, and excluded.
+4. Use the summary() command to summarize each of the variables in this slimmer data frame. In the write-up, you should briefly describe these variables, with reference to a summary table of information. Keep in mind the relevant detail that a non-technical manager would want to know.
+</p>
+<p>
+Executive Summary
+	We began this project by subsetting the dataset into the slimmer dataframe you requested.  As we read on the website and noticed in the data, there were several shortcomings in the dataset that needed cleaning.  We only included the survey responses in which the “bornondate” was between 245 days (35 Weeks) and 301 days (43 days).  We threw out the rows that SpaceFem excluded from the “exclude column” for various reasons.  Another limitation was that if the survey respondent did not know their LMP date, it was assumed it was 280 days before the due date.
+</p>
+<p>
+We were able to recreate the graph (see plot 1)  comparing spontaneous and induced births to determine if either had an effect on the length of a pregnancy.  We analyzed whether or not a mother having previous births affected the length of the pregnancy (see plot 2) and concluded that whether or not this was a mother’s first birth had no impact on the length of the pregnancy.  We also concluded that the detection type had no impact on the length of a pregnancy (see plot 3).  We investigated the impact of weight on the length of a pregnancy (see plot 4) and concluded that babies weighing less than 7 pounds tended to be born earlier while babies weighing more than or equal to 7 pounds were born slightly later.  We examined whether the mother’s age had any impact on the length of the pregnancy (see plot 5) and concluded that there is a distinct spike in later births (41-42 weeks) for mothers born in the 1970s.
+</p>
+<p>
+We overlaid a normal distribution onto a plot (see plot 6) and noticed that there is a greater likelihood of a baby being born before 40 weeks than after and a much greater variance in early births than late ones. 
+</p>
+
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#global code</span>
+<span class="hl com">##global adjustments starts 01</span>
+<span class="hl kwd">rm</span><span class="hl std">(</span><span class="hl kwc">list</span><span class="hl std">=</span><span class="hl kwd">ls</span><span class="hl std">())</span>
+<span class="hl com">#seed for replication</span>
+<span class="hl kwd">set.seed</span><span class="hl std">(</span><span class="hl num">100</span><span class="hl std">)</span>
+<span class="hl std">oldwarnval</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getOption</span><span class="hl std">(</span><span class="hl str">&quot;warn&quot;</span><span class="hl std">)</span> <span class="hl com">#preserve old value</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">=</span> <span class="hl opt">-</span><span class="hl num">1</span><span class="hl std">)</span> <span class="hl com">#warnings are silent now</span>
+
+<span class="hl com">##global adjustments ends 01</span>
+
+
+<span class="hl com">#####generalized plot function</span>
+<span class="hl std">plotFunction</span> <span class="hl kwb">&lt;-</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">x1</span><span class="hl std">,</span><span class="hl kwc">y1</span><span class="hl std">,</span><span class="hl kwc">x2</span><span class="hl std">,</span><span class="hl kwc">y2</span><span class="hl std">,</span><span class="hl kwc">x3</span> <span class="hl std">=</span> <span class="hl opt">-</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl kwc">y3</span>
+                         <span class="hl std">,</span><span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;plot&quot;</span>
+                         <span class="hl std">,</span><span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;var1&quot;</span><span class="hl std">,</span><span class="hl str">&quot;var2&quot;</span><span class="hl std">)</span>
+                         <span class="hl std">,</span><span class="hl kwc">customYlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">7</span><span class="hl opt">/</span><span class="hl num">100</span><span class="hl std">)</span>
+                         <span class="hl std">,</span><span class="hl kwc">customLegend</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">35.2</span><span class="hl std">,</span><span class="hl num">37.5</span><span class="hl std">,</span><span class="hl num">0.065</span><span class="hl std">,</span> <span class="hl num">0.055</span><span class="hl std">)</span>
+                         <span class="hl std">,</span><span class="hl kwc">customGrid</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">8</span><span class="hl std">,</span><span class="hl num">7</span><span class="hl std">)</span>
+                        <span class="hl std">){</span>
+  <span class="hl com">#X fisrt line plot</span>
+  <span class="hl com">#Y second line plot  </span>
+  <span class="hl com">#Z thir line plot</span>
+  <span class="hl std">x</span> <span class="hl kwb">=</span> <span class="hl std">x1;y</span> <span class="hl kwb">=</span> <span class="hl std">y1;</span>
+  <span class="hl kwd">plot</span><span class="hl std">(x,y</span>
+       <span class="hl std">,</span><span class="hl kwc">type</span><span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+       <span class="hl std">,</span><span class="hl kwc">main</span><span class="hl std">= ztitle</span>
+       <span class="hl std">,</span><span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">6</span><span class="hl opt">/</span><span class="hl num">10</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)</span>  <span class="hl com">#36,137,371 #color of the line chart</span>
+       <span class="hl std">,</span><span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span>                  <span class="hl com">#line thickness</span>
+       <span class="hl std">,</span><span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">19</span>                  <span class="hl com"># add points, solid circle,</span>
+       <span class="hl std">,</span><span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.3</span>                <span class="hl com"># size of the point on the chart</span>
+       <span class="hl std">,</span><span class="hl kwc">tick</span> <span class="hl std">= F</span>
+       <span class="hl std">,</span><span class="hl kwc">xaxs</span> <span class="hl std">=</span> <span class="hl str">&quot;i&quot;</span>
+       <span class="hl std">,</span><span class="hl kwc">yaxs</span> <span class="hl std">=</span> <span class="hl str">&quot;i&quot;</span>
+       <span class="hl std">,</span><span class="hl kwc">xaxt</span> <span class="hl std">=</span> <span class="hl str">&quot;n&quot;</span>
+       <span class="hl std">,</span><span class="hl kwc">ylim</span> <span class="hl std">= customYlim</span>
+       <span class="hl std">,</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;&quot;</span>
+       <span class="hl std">,</span><span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;&quot;</span>
+  <span class="hl std">)</span>  <span class="hl com">#customGrid = c(8,7)</span>
+  <span class="hl kwd">grid</span><span class="hl std">(</span><span class="hl kwc">nx</span> <span class="hl std">= customGrid[</span><span class="hl num">1</span><span class="hl std">]</span><span class="hl com">#8</span>
+       <span class="hl std">,</span><span class="hl kwc">ny</span> <span class="hl std">= customGrid[</span><span class="hl num">2</span><span class="hl std">]</span><span class="hl com">#7</span>
+       <span class="hl std">,</span> <span class="hl kwc">lty</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;cornsilk2&quot;</span><span class="hl std">)</span>
+
+  <span class="hl kwd">lines</span><span class="hl std">(x, y</span>
+        <span class="hl std">,</span><span class="hl kwc">type</span><span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+        <span class="hl std">,</span><span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">6</span><span class="hl opt">/</span><span class="hl num">10</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)</span>  <span class="hl com">#36,137,371 #color of the line chart</span>
+        <span class="hl std">,</span><span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span>                  <span class="hl com">#line thickness</span>
+        <span class="hl std">,</span><span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">19</span>                  <span class="hl com"># add points, solid circle,</span>
+        <span class="hl std">,</span><span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.3</span>                 <span class="hl com"># size of the point on the chart</span>
+  <span class="hl std">)</span>
+  <span class="hl std">x</span> <span class="hl kwb">=</span> <span class="hl std">x2; y</span> <span class="hl kwb">=</span> <span class="hl std">y2;</span>
+  <span class="hl kwd">lines</span><span class="hl std">(x, y</span>
+        <span class="hl std">,</span><span class="hl kwc">type</span><span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+        <span class="hl std">,</span><span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">149</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">41</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">176</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">)</span>
+        <span class="hl std">,</span><span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span>
+        <span class="hl std">,</span><span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">19</span>
+        <span class="hl std">,</span><span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.3</span>
+  <span class="hl std">)</span>
+  <span class="hl kwa">if</span><span class="hl std">(x3</span> <span class="hl opt">!= -</span><span class="hl num">1</span><span class="hl std">){</span>
+    <span class="hl std">x</span> <span class="hl kwb">=</span> <span class="hl std">x3; y</span> <span class="hl kwb">=</span> <span class="hl std">y3;</span>
+    <span class="hl std">zcol</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">((</span><span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">6</span><span class="hl opt">/</span><span class="hl num">10</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)),</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">36</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">29</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">219</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">),</span>
+      <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">149</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">41</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">176</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">))</span> <span class="hl com">#3 colors</span>
+    <span class="hl std">zcol1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">36</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">29</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">219</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">)</span>
+    <span class="hl kwd">lines</span><span class="hl std">(x, y,</span> <span class="hl kwc">type</span> <span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+          <span class="hl std">,</span><span class="hl kwc">col.lab</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span>
+          <span class="hl std">,</span><span class="hl kwc">col</span> <span class="hl std">= zcol1</span>
+          <span class="hl std">,</span><span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span>
+          <span class="hl std">,</span><span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">19</span>
+          <span class="hl std">,</span><span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.3</span>
+    <span class="hl std">)</span>
+  <span class="hl std">}</span><span class="hl kwa">else</span><span class="hl std">{</span>
+    <span class="hl std">x</span> <span class="hl kwb">=</span> <span class="hl num">0</span><span class="hl std">; y</span> <span class="hl kwb">=</span> <span class="hl num">0</span><span class="hl std">;</span>
+    <span class="hl std">zcol</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">((</span><span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">6</span><span class="hl opt">/</span><span class="hl num">10</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)),</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">149</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">41</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">176</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">))</span> <span class="hl com"># 2 colors</span>
+  <span class="hl std">}</span>
+
+  <span class="hl kwd">axis</span><span class="hl std">(</span><span class="hl kwc">side</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">at</span> <span class="hl std">=</span> <span class="hl num">35</span><span class="hl opt">:</span><span class="hl num">43</span>
+       <span class="hl std">,</span><span class="hl kwc">labels</span> <span class="hl std">=</span> <span class="hl kwd">paste</span><span class="hl std">(</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">35</span><span class="hl opt">:</span><span class="hl num">43</span><span class="hl std">),</span><span class="hl str">&quot;weeks&quot;</span><span class="hl std">)</span>
+       <span class="hl std">,</span><span class="hl kwc">col.axis</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">151</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">145</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">145</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">)</span>
+       <span class="hl std">,</span><span class="hl kwc">tick</span> <span class="hl std">= F</span>
+  <span class="hl std">)</span>
+  <span class="hl kwd">axis</span><span class="hl std">(</span><span class="hl kwc">side</span> <span class="hl std">=</span> <span class="hl num">2</span>
+       <span class="hl std">,</span><span class="hl kwc">col.axis</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">151</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">145</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">145</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">)</span>
+       <span class="hl std">,</span><span class="hl kwc">tick</span> <span class="hl std">= F</span>
+  <span class="hl std">)</span>
+  <span class="hl kwd">legend</span><span class="hl std">(</span> <span class="hl kwc">x</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(customLegend[</span><span class="hl num">1</span><span class="hl std">],customLegend[</span><span class="hl num">2</span><span class="hl std">] )</span>
+         <span class="hl std">,</span><span class="hl kwc">y</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(customLegend[</span><span class="hl num">3</span><span class="hl std">],customLegend[</span><span class="hl num">4</span><span class="hl std">] )</span> <span class="hl com">#x=c(35.2,37.5),y=c(0.98, 0.75)</span>
+         <span class="hl std">,</span><span class="hl kwc">legend</span> <span class="hl std">= zlegendText</span>
+         <span class="hl std">,</span><span class="hl kwc">fill</span> <span class="hl std">= zcol</span>
+         <span class="hl std">,</span><span class="hl kwc">text.col</span> <span class="hl std">=</span> <span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">151</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">145</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">,</span> <span class="hl num">10</span><span class="hl opt">/</span><span class="hl num">255</span><span class="hl std">)</span>
+         <span class="hl std">,</span><span class="hl kwc">border</span> <span class="hl std">=</span> <span class="hl num">1</span>
+         <span class="hl std">,</span><span class="hl kwc">box.lty</span><span class="hl std">=</span> <span class="hl num">0</span>
+         <span class="hl std">,</span><span class="hl kwc">bty</span> <span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+         <span class="hl std">,</span><span class="hl kwc">y.intersp</span><span class="hl std">=</span><span class="hl num">1.5</span>
+  <span class="hl std">)</span>
+  <span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwc">v</span> <span class="hl std">=</span> <span class="hl num">40</span><span class="hl std">)</span>
+
+  <span class="hl com">#return(1)</span>
+<span class="hl std">}</span>
+<span class="hl com">#read file</span>
+<span class="hl std">df</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">data.frame</span><span class="hl std">(</span><span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;~/Downloads/Tony/Project 1/sf_gestationdata.csv&quot;</span><span class="hl std">,</span><span class="hl kwc">stringsAsFactors</span> <span class="hl std">= F))</span>
+</pre></div>
+</div></div>
+
+<p>
+Figure 1: Summary information for each Variable
+<li>id - a unique identification number for one survey entry.  Each survey entry is assigned a unique identifier.  This dataset contains almost 14,000 unique survey entries.
+</li><li>
+motherbirthyear - denotes the year in which the mother was born. 
+multiples - describes how many babies were being born.  If a mother was expecting twins it is labeled with a 2.  A mother expecting triplets was given the label 3.
+</li><li>
+pounds - describes the baby’s weight in pounds. 
+</li><li>
+previousbirths - tells us if this is the mother’s first birth or not.  If it is her first birth, her survey entry was assigned the number 0.  If it is her second, she was assigned 1.  If it was her third, she was assigned 2 and this pattern continues.
+</li><li>
+bornonday - shows the difference between the date the baby was born and the LMP date.  We, along with the website, decided to only include survey entries in which the baby was born between 245 (35 weeks) days and 301 (43 weeks) One limitation of the dataset is that if the LMP was not known, the data assumes it was 280 days before the due date.  The dataset assumes 280 days because of Naegele’s rule which is the traditional method of calculating a due date.  
+duedatebase - describes if the due date was determined by ovulation, LMP, or ultrasound.
+</li><li>
+induced - indicates if the birth was induced or not.  If it was induced, it was given a 1, if it was spontaneous it was given a 0.
+</li><li>
+exclude -  indicates whether a record was excluded from the charts for some reason.  Approximately 0.02% of the survey entries were excluded.
+</li>
+</p>
+
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#elmininate date based on exclude column</span>
+<span class="hl std">df</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df[df</span><span class="hl opt">$</span><span class="hl std">exclude</span> <span class="hl opt">==</span> <span class="hl num">0</span><span class="hl std">,]</span>
+<span class="hl com">#slimmer dataFrame</span>
+<span class="hl std">df02</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;id&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;motherbirthyear&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;multiples&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;pounds&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;bornonday&quot;</span>
+              <span class="hl std">,</span> <span class="hl str">&quot;duedatebase&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;induced&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;exclude&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;previousbirths&quot;</span><span class="hl std">)]</span>
+
+<span class="hl com">#head at a glance</span>
+<span class="hl kwd">head</span><span class="hl std">(df02)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   id motherbirthyear multiples pounds bornonday duedatebase induced
+## 1  6            1974         1      7       277       Other       1
+## 3  8            1979         1      7       277         LMP       0
+## 4  9            1975         1      8       278         LMP       0
+## 5 10            1984         1     10       286         LMP       0
+## 6 11            1984         1      8       284         LMP       1
+## 7 12            1978         1      8       287  ultrasound       0
+##   exclude previousbirths
+## 1       0              0
+## 3       0              0
+## 4       0              1
+## 5       0              1
+## 6       0              0
+## 7       0              0
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(df02)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##        id        motherbirthyear   multiples         pounds       
+##  Min.   :    6   Min.   :    0   Min.   :1.000   Min.   :  0.000  
+##  1st Qu.: 3660   1st Qu.: 1979   1st Qu.:1.000   1st Qu.:  6.000  
+##  Median : 7169   Median : 1983   Median :1.000   Median :  7.000  
+##  Mean   : 7063   Mean   : 1907   Mean   :1.007   Mean   :  6.358  
+##  3rd Qu.:10486   3rd Qu.: 1987   3rd Qu.:1.000   3rd Qu.:  8.000  
+##  Max.   :13799   Max.   :19955   Max.   :3.000   Max.   :610.000  
+##    bornonday     duedatebase           induced          exclude 
+##  Min.   :100.0   Length:13255       Min.   :0.0000   Min.   :0  
+##  1st Qu.:272.0   Class :character   1st Qu.:0.0000   1st Qu.:0  
+##  Median :279.0   Mode  :character   Median :0.0000   Median :0  
+##  Mean   :275.3                      Mean   :0.2413   Mean   :0  
+##  3rd Qu.:286.0                      3rd Qu.:0.0000   3rd Qu.:0  
+##  Max.   :333.0                      Max.   :1.0000   Max.   :0  
+##  previousbirths   
+##  Min.   : 0.0000  
+##  1st Qu.: 0.0000  
+##  Median : 0.0000  
+##  Mean   : 0.4104  
+##  3rd Qu.: 1.0000  
+##  Max.   :70.0000
+</pre></div>
+</div></div>
+
+<p>
+PlotOne
+<p>
+Based on separating the data into induced vs. spontaneous births, it is clear that both variables are centered around the same mean.  The distribution of both spontaneous and induced births are normally distributed but are both skewed slightly left.  As seen in Plot 1, there is significantly more data on spontaneous births relative to induced births.  This limitation inhibits our ability to make supportable interpretations.  Even with limited induced data, we conclude that whether a birth was induced or spontaneous appears to have no observable impact on the length of the pregnancy. 
+</p>
+
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">####Working with the data.</span>
+<span class="hl com">#add week column to the df</span>
+<span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">round</span><span class="hl std">(df02</span><span class="hl opt">$</span><span class="hl std">bornonday</span><span class="hl opt">/</span><span class="hl num">7</span><span class="hl std">,</span><span class="hl num">02</span><span class="hl std">)</span> <span class="hl com">#revisit # week generation</span>
+<span class="hl com">####plotOne</span>
+<span class="hl com">#add Spontaneous column to the table</span>
+<span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">Spontaneous</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(df02</span><span class="hl opt">$</span><span class="hl std">induced</span> <span class="hl opt">==</span> <span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">)</span>
+<span class="hl com">#aggregate table to plot</span>
+<span class="hl std">df03induced</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(induced</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span> <span class="hl std">= sum,</span> <span class="hl kwc">data</span> <span class="hl std">= df02[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;induced&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Spontaneous&quot;</span><span class="hl std">)])</span>
+<span class="hl std">df03spontaneous</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(Spontaneous</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span> <span class="hl std">= sum,</span> <span class="hl kwc">data</span> <span class="hl std">= df02[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;induced&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Spontaneous&quot;</span><span class="hl std">)])</span>
+
+<span class="hl com">#data frames to plot One </span>
+<span class="hl std">df03induced</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df03induced[df03induced</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df03induced</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl std">df03spontaneous</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df03spontaneous[df03spontaneous</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span>
+                                    <span class="hl opt">&amp;</span> <span class="hl std">df03spontaneous</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl com">#normalizing the axis </span>
+<span class="hl std">normFactor</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">max</span><span class="hl std">(df03spontaneous</span><span class="hl opt">$</span><span class="hl std">Spontaneous)</span> <span class="hl opt">+</span> <span class="hl num">51</span> <span class="hl com">#normalize</span>
+<span class="hl std">df03spontaneous</span><span class="hl opt">$</span><span class="hl std">Spontaneous</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df03spontaneous</span><span class="hl opt">$</span><span class="hl std">Spontaneous</span><span class="hl opt">/</span><span class="hl std">normFactor</span>
+<span class="hl com">#normFactor &lt;- max(df03induced$induced) #normalize</span>
+<span class="hl std">df03induced</span><span class="hl opt">$</span><span class="hl std">induced</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df03induced</span><span class="hl opt">$</span><span class="hl std">induced</span><span class="hl opt">/</span><span class="hl std">normFactor</span>
+
+<span class="hl com">#custom parameters</span>
+<span class="hl std">customYlim</span> <span class="hl kwb">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">)</span>
+<span class="hl std">customLegend</span> <span class="hl kwb">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">35.2</span><span class="hl std">,</span><span class="hl num">37.5</span><span class="hl std">,</span><span class="hl num">0.98</span><span class="hl std">,</span> <span class="hl num">0.75</span><span class="hl std">)</span>
+<span class="hl std">customGrid</span> <span class="hl kwb">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">10</span><span class="hl std">,</span><span class="hl num">7</span><span class="hl std">)</span>
+<span class="hl com">#plot One </span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df03spontaneous</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y1</span> <span class="hl std">= df03spontaneous</span><span class="hl opt">$</span><span class="hl std">Spontaneous,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df03induced</span><span class="hl opt">$</span><span class="hl std">week ,</span> <span class="hl kwc">y2</span><span class="hl std">= df03induced</span><span class="hl opt">$</span><span class="hl std">induced,</span>
+             <span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;PlotOne : Spontaneous vs induced&quot;</span><span class="hl std">,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Spontaneous&quot;</span><span class="hl std">,</span><span class="hl str">&quot;induced&quot;</span><span class="hl std">),</span>
+             <span class="hl kwc">customYlim</span> <span class="hl std">= customYlim,</span>
+             <span class="hl kwc">customLegend</span> <span class="hl std">= customLegend,</span>
+             <span class="hl kwc">customGrid</span> <span class="hl std">= customGrid</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" class="plot" /></div></div>
+</p>
+
+<p>
+PlotTwo
+<p>
+This chart compares the length of pregnancy for mothers undergoing their first birth compared to mothers who have had previous births.  The distribution are both normally distributed but are slightly left skewed.  There does not appear to be any statistically significant differences in the length of a mother’s pregnancy. Therefore, we would argue that conventional medical wisdom arguing that shorter first pregnancies result in shorter second pregnancies is not supported by this data. 
+</p>
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#### plotTwo</span>
+<span class="hl com"># First births vs births 2+</span>
+<span class="hl com"># head(df02)</span>
+<span class="hl com">#new dfs for plots # weeks in [35,43]</span>
+<span class="hl std">df04fb</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">previousbirths</span> <span class="hl opt">==</span> <span class="hl num">0</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span><span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span><span class="hl num">43.00</span><span class="hl std">,]</span>  <span class="hl com">#&quot;first Birth df&quot;</span>
+<span class="hl std">df04pb</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">previousbirths</span> <span class="hl opt">==</span> <span class="hl num">1</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span><span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span><span class="hl num">43.00</span><span class="hl std">,]</span>  <span class="hl com">#&quot;Previous Birth df&quot;</span>
+
+<span class="hl com">#aggregate tables</span>
+<span class="hl std">df04fbA</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(previousbirths</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span><span class="hl std">= length , df04fb[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;previousbirths&quot;</span><span class="hl std">)] )</span>
+<span class="hl std">df04pbA</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(previousbirths</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span><span class="hl std">= length , df04pb[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;previousbirths&quot;</span><span class="hl std">)] )</span>
+
+<span class="hl com">#count to be normalized</span>
+<span class="hl std">count</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df04fbA</span><span class="hl opt">$</span><span class="hl std">previousbirths)</span>
+<span class="hl std">df04fbA</span><span class="hl opt">$</span><span class="hl std">previousbirths</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df04fbA</span><span class="hl opt">$</span><span class="hl std">previousbirths</span><span class="hl opt">/</span><span class="hl std">count</span> <span class="hl com">#normalization with count</span>
+<span class="hl std">count</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df04pbA</span><span class="hl opt">$</span><span class="hl std">previousbirths)</span>
+<span class="hl std">df04pbA</span><span class="hl opt">$</span><span class="hl std">previousbirths</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df04pbA</span><span class="hl opt">$</span><span class="hl std">previousbirths</span><span class="hl opt">/</span><span class="hl std">count</span> <span class="hl com">#normalization with count</span>
+
+<span class="hl com">#plotTwo</span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df04fbA</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y1</span> <span class="hl std">= df04fbA</span><span class="hl opt">$</span><span class="hl std">previousbirths,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df04pbA</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y2</span><span class="hl std">= df04pbA</span><span class="hl opt">$</span><span class="hl std">previousbirths,</span>
+             <span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;PlotTwo : First births vs births 2+.&quot;</span><span class="hl std">,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;First births&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Previous births&quot;</span><span class="hl std">)</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" class="plot" /></div></div>
+</p>
+
+
+<p>
+PlotThree
+<p>
+This chart compares the length of the pregnancy for the three different detection types.  The distributions for all three are normally distributed with a slight left skew.  The data indicates that the different detection types have no statistically significant impact on the length of a mother’s pregnancy.
+</p>
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">####Plot 3</span>
+<span class="hl com">#Detection type:Ultrasound vs Ovulation vs LMP</span>
+<span class="hl com">#head(df02)</span>
+<span class="hl kwd">unique</span><span class="hl std">(df02</span><span class="hl opt">$</span><span class="hl std">duedatebase)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] &quot;Other&quot;      &quot;LMP&quot;        &quot;ultrasound&quot; &quot;NULL&quot;       &quot;ovulation&quot;
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">df05</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">duedatebase</span><span class="hl opt">==</span><span class="hl str">&quot;LMP&quot;</span>             <span class="hl com">#df for ploting</span>
+               <span class="hl opt">|</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">duedatebase</span><span class="hl opt">==</span><span class="hl str">&quot;ultrasound&quot;</span>
+               <span class="hl opt">|</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">duedatebase</span><span class="hl opt">==</span><span class="hl str">&quot;ovulation&quot;</span><span class="hl std">,]</span>
+
+<span class="hl com">#dummy columns</span>
+<span class="hl std">df05</span><span class="hl opt">$</span><span class="hl std">LMP</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(df05</span><span class="hl opt">$</span><span class="hl std">duedatebase</span> <span class="hl opt">==</span> <span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">)</span> <span class="hl com">#LMP column</span>
+<span class="hl std">df05</span><span class="hl opt">$</span><span class="hl std">ultrasound</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(df05</span><span class="hl opt">$</span><span class="hl std">duedatebase</span> <span class="hl opt">==</span> <span class="hl str">&quot;ultrasound&quot;</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">)</span> <span class="hl com">#ultrasound column</span>
+<span class="hl std">df05</span><span class="hl opt">$</span><span class="hl std">ovulation</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(df05</span><span class="hl opt">$</span><span class="hl std">duedatebase</span> <span class="hl opt">==</span> <span class="hl str">&quot;ovulation&quot;</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">)</span> <span class="hl com"># Ovulation</span>
+
+<span class="hl com">#aggregate tables</span>
+<span class="hl std">df05Lmp</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(LMP</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span><span class="hl std">= sum ,</span> <span class="hl kwc">data</span> <span class="hl std">= df05[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ultrasound&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ovulation&quot;</span><span class="hl std">)])</span>
+<span class="hl std">df05ultrasound</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(ultrasound</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span><span class="hl std">= sum ,</span> <span class="hl kwc">data</span> <span class="hl std">= df05[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ultrasound&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ovulation&quot;</span><span class="hl std">)])</span>
+<span class="hl std">df05ovulation</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(ovulation</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span><span class="hl std">= sum ,</span> <span class="hl kwc">data</span> <span class="hl std">= df05[,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ultrasound&quot;</span><span class="hl std">,</span><span class="hl str">&quot;ovulation&quot;</span><span class="hl std">)])</span>
+
+<span class="hl com">#remove weeks !in [35.00,43.00]</span>
+<span class="hl std">df05Lmp</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05Lmp[df05Lmp</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df05Lmp</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl std">df05ultrasound</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05ultrasound[df05ultrasound</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df05ultrasound</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl std">df05ovulation</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05ovulation[df05ovulation</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df05ovulation</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+
+<span class="hl com">#counter to normalize the table</span>
+<span class="hl std">count</span> <span class="hl kwb">=</span> <span class="hl kwd">sum</span><span class="hl std">(df05Lmp</span><span class="hl opt">$</span><span class="hl std">LMP)</span>
+<span class="hl std">df05Lmp</span><span class="hl opt">$</span><span class="hl std">LMP</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05Lmp</span><span class="hl opt">$</span><span class="hl std">LMP</span><span class="hl opt">/</span><span class="hl std">count</span> <span class="hl com">#nomalize </span>
+<span class="hl std">count</span> <span class="hl kwb">=</span> <span class="hl kwd">sum</span><span class="hl std">(df05ultrasound</span><span class="hl opt">$</span><span class="hl std">ultrasound)</span>
+<span class="hl std">df05ultrasound</span><span class="hl opt">$</span><span class="hl std">ultrasound</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05ultrasound</span><span class="hl opt">$</span><span class="hl std">ultrasound</span><span class="hl opt">/</span><span class="hl std">count</span>
+<span class="hl std">count</span> <span class="hl kwb">=</span> <span class="hl kwd">sum</span><span class="hl std">(df05ovulation</span><span class="hl opt">$</span><span class="hl std">ovulation)</span>
+<span class="hl std">df05ovulation</span><span class="hl opt">$</span><span class="hl std">ovulation</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df05ovulation</span><span class="hl opt">$</span><span class="hl std">ovulation</span><span class="hl opt">/</span><span class="hl std">count</span>
+
+<span class="hl com">#plotThree</span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df05Lmp</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y1</span> <span class="hl std">= df05Lmp</span><span class="hl opt">$</span><span class="hl std">LMP,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df05ovulation</span><span class="hl opt">$</span><span class="hl std">week ,</span> <span class="hl kwc">y2</span><span class="hl std">= df05ovulation</span><span class="hl opt">$</span><span class="hl std">ovulation,</span>
+             <span class="hl kwc">x3</span> <span class="hl std">= df05ultrasound</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y3</span><span class="hl std">= df05ultrasound</span><span class="hl opt">$</span><span class="hl std">ultrasound,</span>
+             <span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;PlotThree : Detection type: ultrasound, ovulation, LMP.&quot;</span><span class="hl std">,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Ovulation&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Ultrasound&quot;</span><span class="hl std">)</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" class="plot" /></div></div>
+</p>
+
+
+<p>
+PlotFour
+<p>
+This chart compares the length of pregnancy for babies who were born weighing less than 7 pounds and babies who were born weighing more than or equal to 7 pounds.  The means are the same and the data is relatively normally distributed. The distributions for babies weighing under 7 pounds and more than or equal to 7 pounds are skewed left.  To us, this chart appears to indicate that that babies born weighing less than 7 pounds tend to be born slightly earlier while babies weighing more than or equal to 7 pounds tend to be born slightly later. 
+</p>
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#####plotFour</span>
+<span class="hl com">#Baby weight &gt;= 7lbs versus Baby weight &lt; 7lbs</span>
+<span class="hl com">#head(df02,20)</span>
+<span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(df02</span><span class="hl opt">$</span><span class="hl std">pounds</span> <span class="hl opt">&gt;=</span><span class="hl num">7</span><span class="hl std">,</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)</span> <span class="hl com">#dummy column</span>
+<span class="hl std">df06b7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span> <span class="hl opt">==</span> <span class="hl num">0</span><span class="hl std">,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;poundsGT7&quot;</span><span class="hl std">)]</span>  <span class="hl com">#below 7</span>
+<span class="hl std">df06a7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span> <span class="hl opt">==</span> <span class="hl num">1</span><span class="hl std">,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;poundsGT7&quot;</span><span class="hl std">)]</span>  <span class="hl com">#above 7</span>
+
+<span class="hl com">#week within 35 to 43</span>
+<span class="hl std">df06b7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df06b7[df06b7</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df06b7</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span><span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl std">df06a7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df06a7[df06a7</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df06a7</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span><span class="hl num">43.00</span><span class="hl std">,]</span>
+
+<span class="hl com">#aggregate tables for ploting</span>
+<span class="hl std">df06b7tab</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(poundsGT7</span> <span class="hl opt">~</span> <span class="hl std">week ,</span><span class="hl kwc">FUN</span> <span class="hl std">= length,</span> <span class="hl kwc">data</span> <span class="hl std">= df06b7)</span> <span class="hl com"># below 7</span>
+<span class="hl std">df06a7tab</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(poundsGT7</span> <span class="hl opt">~</span> <span class="hl std">week ,</span><span class="hl kwc">FUN</span> <span class="hl std">= length,</span> <span class="hl kwc">data</span> <span class="hl std">= df06a7)</span> <span class="hl com"># above 7</span>
+
+<span class="hl com">#count for normalize</span>
+<span class="hl std">count</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df06b7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7)</span>
+<span class="hl std">df06b7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df06b7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span><span class="hl opt">/</span><span class="hl std">count</span>
+<span class="hl std">count</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df06a7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7)</span>
+<span class="hl std">df06a7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df06a7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7</span><span class="hl opt">/</span><span class="hl std">count</span>
+
+<span class="hl com">#PlotFour : Baby weight &gt;= 7lbs versus Baby weight &lt; 7lbs</span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df06a7tab</span><span class="hl opt">$</span><span class="hl std">week ,</span> <span class="hl kwc">y1</span><span class="hl std">= df06a7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df06a7tab</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y2</span> <span class="hl std">= df06b7tab</span><span class="hl opt">$</span><span class="hl std">poundsGT7,</span>
+             <span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;PlotFour : Baby weight &gt;= 7lbs versus Baby weight &lt; 7lbs&quot;</span><span class="hl std">,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Baby weight &gt;= 7lbs&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Baby weight &lt; 7lbs&quot;</span><span class="hl std">)</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-6-1.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div></div>
+</p>
+
+
+
+<p>
+PlotFive
+<p>
+Comparing mothers born in the 1970s compared to those born in the 1980s or later, both groups still center around the 40 week mean, however, there is a distinct spike in later births (41-42 weeks) for mothers born in the 1970s. One speculation is that this spike may be attributed to induced births around 41-42 weeks as shown in the original graph.
+</p>
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">####PlotFive </span>
+<span class="hl com">#head(df02,20)</span>
+<span class="hl std">df70s</span> <span class="hl kwb">&lt;-</span><span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl opt">&gt;</span> <span class="hl num">1970</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl opt">&lt;=</span><span class="hl num">1979</span><span class="hl std">,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;motherbirthyear&quot;</span><span class="hl std">)]</span>
+<span class="hl std">df80s</span> <span class="hl kwb">&lt;-</span><span class="hl std">df02[df02</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl opt">&gt;</span> <span class="hl num">1980</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl opt">&lt;</span> <span class="hl num">2019</span><span class="hl std">,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;week&quot;</span><span class="hl std">,</span><span class="hl str">&quot;motherbirthyear&quot;</span><span class="hl std">)]</span>
+
+<span class="hl std">df70s</span> <span class="hl kwb">&lt;-</span><span class="hl std">df70s[df70s</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df70s</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+<span class="hl std">df80s</span> <span class="hl kwb">&lt;-</span><span class="hl std">df80s[df80s</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df80s</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;=</span> <span class="hl num">43.00</span><span class="hl std">,]</span>
+
+<span class="hl com">#aggregate tables</span>
+<span class="hl std">df70stab</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(motherbirthyear</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span> <span class="hl std">= length,df70s)</span>
+<span class="hl std">df80stab</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">aggregate</span><span class="hl std">(motherbirthyear</span> <span class="hl opt">~</span> <span class="hl std">week,</span><span class="hl kwc">FUN</span> <span class="hl std">= length,df80s)</span>
+
+<span class="hl com">#normalization</span>
+<span class="hl std">counter</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df70stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear)</span><span class="hl opt">+</span> <span class="hl num">10</span>
+<span class="hl std">df70stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df70stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span><span class="hl opt">/</span><span class="hl std">counter</span>
+<span class="hl std">counter</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sum</span><span class="hl std">(df80stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear)</span><span class="hl opt">+</span> <span class="hl num">10</span>
+<span class="hl std">df80stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span> <span class="hl kwb">&lt;-</span> <span class="hl std">df80stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear</span><span class="hl opt">/</span><span class="hl std">counter</span>
+
+<span class="hl com">#PlotFive: Mothers whose birth year is in the 1970s, versus mothers whose birthyear is 1980s or later.</span>
+<span class="hl std">ztitle</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;PlotFive: Mothers whose birth year is in the 1970s, versus mothers whose birthyear is 1980s or later.&quot;</span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df80stab</span><span class="hl opt">$</span><span class="hl std">week ,</span> <span class="hl kwc">y1</span><span class="hl std">= df80stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df70stab</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y2</span> <span class="hl std">= df70stab</span><span class="hl opt">$</span><span class="hl std">motherbirthyear,</span>
+             <span class="hl kwc">ztitle</span><span class="hl std">= ztitle,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;birth year is in the 1980s&quot;</span><span class="hl std">,</span><span class="hl str">&quot;birth year is in the 1970s&quot;</span><span class="hl std">)</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" class="plot" /></div></div>
+</p>
+
+
+
+<p>
+NextPart(PlotSix)
+<p>
+Calculate the sample mean and standard deviation of the born-on date, and use the dnorm() command to overlay a normal distribution plot on a plot like you generate above, excluding observations excluded from the charts (help(dnorm) if you haven’t used this before). Does the normal distribution provide a useful description of the likelihood a baby is born before the due date? Does the normal distribution provide a useful description of the likelihood a baby is born after the due date?
+<p>
+Yes, this normal distribution gives a clear view of the likelihood a baby is born before the due date and after the due date. Overall, this distribution is centered on a mean just under 40 weeks with a slight skew to the left. This indicates that there is a greater likelihood of a baby being born before 40 weeks than after and a much greater variance in early births than late ones.
+</p>
+</p>
+<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">####Que 3</span>
+<span class="hl com">#Calculate the sample mean and standard deviation of the born-on date, and use the dnorm()</span>
+<span class="hl com">#command to overlay a normal distribution plot on a plot like you generate above,</span>
+<span class="hl com">#excluding observations excluded from the charts. Does the normal distribution </span>
+<span class="hl com">#provide a useful description of the likelihood a baby is born before the due date?</span>
+<span class="hl com">#Does the normal distribution provide a useful description of the likelihood a baby</span>
+<span class="hl com">#is born after the due date?</span>
+
+<span class="hl com">#mean &amp; Sd</span>
+<span class="hl std">mean1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">mean</span><span class="hl std">(df02[df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;</span> <span class="hl num">43.00</span><span class="hl std">,</span><span class="hl str">&quot;week&quot;</span><span class="hl std">])</span>   <span class="hl com">#39.77773</span>
+<span class="hl std">sd1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">sd</span><span class="hl std">(df02[df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&gt;=</span> <span class="hl num">35.00</span> <span class="hl opt">&amp;</span> <span class="hl std">df02</span><span class="hl opt">$</span><span class="hl std">week</span> <span class="hl opt">&lt;</span> <span class="hl num">43.00</span><span class="hl std">,</span><span class="hl str">&quot;week&quot;</span><span class="hl std">])</span>       <span class="hl com">#1.417654</span>
+
+<span class="hl com">#grid</span>
+<span class="hl std">x1</span> <span class="hl kwb">=</span> <span class="hl num">3500</span><span class="hl opt">:</span><span class="hl num">43</span><span class="hl opt">/</span><span class="hl num">7</span> <span class="hl com">#grid, increment in 7th  # from Website, group discussion</span>
+<span class="hl std">mean1</span> <span class="hl kwb">=</span> <span class="hl kwd">mean</span><span class="hl std">(df05</span><span class="hl opt">$</span><span class="hl std">week)</span>
+<span class="hl std">sd1</span> <span class="hl kwb">=</span> <span class="hl num">9.57</span><span class="hl opt">/</span><span class="hl num">7</span>
+<span class="hl std">d</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">dnorm</span><span class="hl std">(x1,</span> <span class="hl kwc">mean</span> <span class="hl std">= mean1,</span> <span class="hl kwc">sd</span> <span class="hl std">= sd1)</span>
+<span class="hl std">d</span> <span class="hl kwb">&lt;-</span> <span class="hl std">d</span><span class="hl opt">/</span><span class="hl kwd">sum</span><span class="hl std">(d)</span>
+<span class="hl com">#plotSix</span>
+<span class="hl kwd">plotFunction</span><span class="hl std">(</span><span class="hl kwc">x1</span> <span class="hl std">= df05Lmp</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y1</span> <span class="hl std">= df05Lmp</span><span class="hl opt">$</span><span class="hl std">LMP,</span>
+             <span class="hl kwc">x2</span> <span class="hl std">= df05ovulation</span><span class="hl opt">$</span><span class="hl std">week ,</span> <span class="hl kwc">y2</span><span class="hl std">= df05ovulation</span><span class="hl opt">$</span><span class="hl std">ovulation,</span>
+             <span class="hl kwc">x3</span> <span class="hl std">= df05ultrasound</span><span class="hl opt">$</span><span class="hl std">week,</span> <span class="hl kwc">y3</span><span class="hl std">= df05ultrasound</span><span class="hl opt">$</span><span class="hl std">ultrasound,</span>
+             <span class="hl kwc">ztitle</span> <span class="hl std">=</span> <span class="hl str">&quot;PlotSix : Born on date&quot;</span><span class="hl std">,</span>
+             <span class="hl kwc">zlegendText</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;LMP&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Ovulation&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Ultrasound&quot;</span><span class="hl std">)</span>
+<span class="hl std">)</span>
+<span class="hl kwd">lines</span><span class="hl std">(</span><span class="hl kwc">x</span> <span class="hl std">= x1,</span> <span class="hl kwc">y</span> <span class="hl std">= d</span>
+            <span class="hl std">,</span><span class="hl kwc">type</span><span class="hl std">=</span> <span class="hl str">&quot;o&quot;</span>
+            <span class="hl std">,</span><span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;black&quot;</span>  <span class="hl com">#black #color of the line chart</span>
+            <span class="hl std">,</span><span class="hl kwc">lty</span> <span class="hl std">=</span> <span class="hl str">&quot;dashed&quot;</span>                  <span class="hl com">#line thickness</span>
+           <span class="hl com"># ,pch = 0                  # add points, solid circle,</span>
+            <span class="hl std">,</span><span class="hl kwc">cex</span> <span class="hl std">=</span> <span class="hl num">0.3</span>                 <span class="hl com"># size of the point on the chart</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl com">###global adjustments start 2</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">= oldwarnval)</span> <span class="hl com">#reset the warning message</span>
+<span class="hl com">###global adjustments end 2</span>
+</pre></div>
+</div></div>
+</p>
+
+</body>
+</html>
