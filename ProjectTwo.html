@@ -1,0 +1,473 @@
+<html>
+
+<head>
+<style type="text/css">
+.knitr .inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage .left {
+  text-align: left;
+}
+.rimage .right {
+  text-align: right;
+}
+.rimage .center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Jaydip</title>
+<title>Title</title>
+
+</head>
+
+<body>
+<p>#Project #2: Unemployment and Correlations</p>
+<p>#Group #7</p>
+<p>#Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, & Griffin Parr</p>
+<p>
+This project asks for you to collect and work with data in a realistic setting. For this assignment,
+1. Write a brief and insightful typed report on your findings using the data.
+2. Asanappendix to your report,include the relevant R code and output (scriptfiles,logfiles,etc.)
+you used to perform the calculations you discuss in the report.
+3. In the main text of your report, you should have typed tables and figures that help you summarize nicely the relevant computations and graphics from this output (not all output is relevant to a coherent discussion).
+</p>
+<p>
+John Taylor’s Other Scatter Plot:
+</p>
+<p>
+Gist: the purpose of the project to work on statistic concepts: Sampling distribution, Inference concepts, r practice etc.
+</p>
+<p>One >>>>> </p>
+<p>
+Construct the data set that generates this scatter plot. The source is FRED, 4 a great source for data on macroeconomics aggregates. When you download the data from FRED, it is helpful to save in .csv format and read into R using read.csv(). Make sure you have obtained the right series of data. You may need to transform data you can download into the variables that Taylor plots. It may be helpful to merge the data into one data frame (merge() is useful for this). Finally, for the later parts of this problem, make sure you download the entire series of observations, not just the ones that Taylor plots.
+</p>
+<p>Gobal Settings</p>
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##global adjustments starts 01</span>
+<span class="hl kwd">rm</span><span class="hl std">(</span><span class="hl kwc">list</span><span class="hl std">=</span><span class="hl kwd">ls</span><span class="hl std">())</span>
+<span class="hl com">#seed for replication</span>
+<span class="hl kwd">set.seed</span><span class="hl std">(</span><span class="hl num">100</span><span class="hl std">)</span>
+<span class="hl std">oldwarnval</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getOption</span><span class="hl std">(</span><span class="hl str">&quot;warn&quot;</span><span class="hl std">)</span> <span class="hl com">#preserve old value</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">=</span> <span class="hl opt">-</span><span class="hl num">1</span><span class="hl std">)</span> <span class="hl com">#warnings are silent now</span>
+<span class="hl com">##global adjustments ends 01</span>
+</pre></div>
+</div></div>
+
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#1 Assemble Data from FRED</span>
+<span class="hl kwd">setwd</span><span class="hl std">(</span><span class="hl str">&quot;~/Downloads/Tony/Project 1/RProjectTwo/data&quot;</span><span class="hl std">)</span>
+<span class="hl com">#data located here:</span>
+<span class="hl com">#https://fred.stlouisfed.org/series/</span>
+
+<span class="hl com">#Import data from FRED</span>
+<span class="hl std">gce</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;GCE.csv&quot;</span><span class="hl std">)</span>
+<span class="hl std">gdp</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;GDP.csv&quot;</span><span class="hl std">)</span>
+<span class="hl std">unrate</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;UNRATE.csv&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div></div>
+
+<p>
+# take a look at the data >>
+</p>
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(gce)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##          DATE          GCE         
+##  1947-01-01:  1   Min.   :  39.36  
+##  1947-04-01:  1   1st Qu.: 156.37  
+##  1947-07-01:  1   Median : 727.35  
+##  1947-10-01:  1   Mean   :1137.96  
+##  1948-01-01:  1   3rd Qu.:1830.03  
+##  1948-04-01:  1   Max.   :3506.57  
+##  (Other)   :280
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(gdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##          DATE          GDP         
+##  1947-01-01:  1   Min.   :  243.2  
+##  1947-04-01:  1   1st Qu.:  702.4  
+##  1947-07-01:  1   Median : 3384.4  
+##  1947-10-01:  1   Mean   : 5880.1  
+##  1948-01-01:  1   3rd Qu.:10301.8  
+##  1948-04-01:  1   Max.   :20411.9  
+##  (Other)   :280
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(unrate)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##          DATE         UNRATE     
+##  1948-01-01:  1   Min.   : 2.50  
+##  1948-02-01:  1   1st Qu.: 4.60  
+##  1948-03-01:  1   Median : 5.60  
+##  1948-04-01:  1   Mean   : 5.77  
+##  1948-05-01:  1   3rd Qu.: 6.80  
+##  1948-06-01:  1   Max.   :10.80  
+##  (Other)   :843
+</pre></div>
+</div></div>
+
+<p>Data manipulation</p>
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#combine gdp and gce data into one table</span>
+<span class="hl std">alldata</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(gce, gdp,</span> <span class="hl kwc">by</span> <span class="hl std">=</span> <span class="hl str">&quot;DATE&quot;</span><span class="hl std">)</span>
+<span class="hl std">alldata</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(alldata, unrate,</span> <span class="hl kwc">by</span> <span class="hl std">=</span> <span class="hl str">&quot;DATE&quot;</span><span class="hl std">)</span>
+
+<span class="hl com">#convert DATE from factor to date</span>
+<span class="hl std">alldata</span><span class="hl opt">$</span><span class="hl std">DATE</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.Date</span><span class="hl std">(alldata</span><span class="hl opt">$</span><span class="hl std">DATE)</span>
+
+<span class="hl com">#limit data to 1990Q1 to 2010Q3</span>
+<span class="hl std">alldata1990</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1990-01-01&quot;</span><span class="hl std">)</span>
+<span class="hl std">alldata2010</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata1990, DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;2010-07-01&quot;</span><span class="hl std">)</span>
+
+<span class="hl com">#create new column to show government purchases as part of GDP</span>
+<span class="hl std">alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp</span> <span class="hl kwb">&lt;-</span> <span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">GCE</span> <span class="hl opt">/</span> <span class="hl std">alldata2010</span><span class="hl opt">$</span><span class="hl std">GDP)</span><span class="hl opt">*</span><span class="hl num">100</span>
+</pre></div>
+</div></div>
+
+<p>Two >>>>> </p>
+<p>
+Use the data set you constructed to reproduce Taylor’s other scatter plot. That is, produce a scatter plot using only the observations from Q1 of 1990 to Q3 of 2010.
+(a) As you do this, try to format the dates as dates (look up how to do this using the as.Date() function). This will help you to produce nice looking plots within R.
+</p>
+<p>Plot Taylor's Other Graph</p>
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#plot the graph to replicate Taylor's</span>
+<span class="hl kwd">plot</span><span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp, alldata2010</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span> <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Government Purchases as Percent of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">xlim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">17.5</span><span class="hl std">,</span><span class="hl num">21.5</span><span class="hl std">),</span> <span class="hl kwc">ylim</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">3</span><span class="hl std">,</span><span class="hl num">11</span><span class="hl std">),</span>
+     <span class="hl kwc">pch</span> <span class="hl std">=</span> <span class="hl num">16</span><span class="hl std">,</span>
+     <span class="hl kwc">asp</span><span class="hl std">=</span><span class="hl num">.5</span><span class="hl std">,</span>
+     <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Taylors Other Graph&quot;</span>
+     <span class="hl std">,</span><span class="hl kwc">xaxs</span> <span class="hl std">=</span> <span class="hl str">&quot;i&quot;</span>
+     <span class="hl std">,</span><span class="hl kwc">yaxs</span> <span class="hl std">=</span> <span class="hl str">&quot;i&quot;</span>
+     <span class="hl std">,</span><span class="hl kwc">xaxt</span> <span class="hl std">=</span> <span class="hl str">&quot;n&quot;</span>
+     <span class="hl std">,</span><span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span>
+     <span class="hl std">)</span>
+<span class="hl kwd">axis</span><span class="hl std">(</span><span class="hl kwc">side</span> <span class="hl std">=</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl kwc">at</span> <span class="hl std">=</span> <span class="hl num">34</span><span class="hl opt">:</span><span class="hl num">44</span><span class="hl opt">/</span><span class="hl num">2</span><span class="hl std">)</span> <span class="hl com"># x axis</span>
+<span class="hl kwd">axis</span><span class="hl std">(</span><span class="hl kwc">side</span> <span class="hl std">=</span> <span class="hl num">2</span><span class="hl std">,</span> <span class="hl kwc">at</span> <span class="hl std">=</span> <span class="hl num">3</span><span class="hl opt">:</span><span class="hl num">11</span> <span class="hl com"># y axis</span>
+<span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" class="plot" /></div></div>
+<p>Three >>>>> </p>
+<p>
+Compare the scatter plot you obtain using the full data set to the one that Taylor reports.
+(a) For this comparison, you may want to use different plotting characters and colors, and the points() function to produce different plotting characters for different parts of the sample.
+</p>
+<p>Compare Taylor's graph to full dataset:</p>
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#compare all data (red) to 1990-2010 data (blue)</span>
+<span class="hl std">alldata</span><span class="hl opt">$</span><span class="hl std">govasgdp</span> <span class="hl kwb">&lt;-</span> <span class="hl std">(alldata</span><span class="hl opt">$</span><span class="hl std">GCE</span> <span class="hl opt">/</span> <span class="hl std">alldata</span><span class="hl opt">$</span><span class="hl std">GDP)</span><span class="hl opt">*</span><span class="hl num">100</span>
+
+<span class="hl kwd">plot</span><span class="hl std">(alldata</span><span class="hl opt">$</span><span class="hl std">govasgdp,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Taylors Graph with full dataset&quot;</span>
+     <span class="hl std">, alldata</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span> <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Government Purchases as Percent of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;red&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">)</span>
+<span class="hl kwd">points</span><span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp, alldata2010</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span> <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Government Purchases as Percent of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span> <span class="hl std">=</span> <span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-6-1.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div></div>
+<p>OBSERVATION: This graph shows Taylor’s correlation in blue compared to the full dataset in red. This is a great visual demonstration of how the correlation of the full dataset is not represented by Taylor’s targeted time-frame</p>
+<p> </p>
+
+<p>Four >>>>> </p>
+<p>
+Analyze the statistical relationship between seasonally-adjusted unemployment and government expenditures in a way that is informative and insightful. Some questions you should consider as you perform the analysis:
+(a) Is the correlation that Taylor presents in his scatter plot stable over time? In your analysis, you could compute the correlation separately decade. In addition to calculations, your analysis should include informative plots that support your main points.
+(b) Write up your comments concisely in a typed report.
+</p>
+<p>Compare Taylor's data to other time periods</p>
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">4</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span> <span class="hl com"># Divide plots area to include multiple plots</span>
+<span class="hl com">#Find a correlation for every decade between 1950-2018</span>
+<span class="hl std">alldata1950</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1950-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;1959-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata1950</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata1950</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] -0.1758542
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata1950</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata1950</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata1950</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata1950</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;1950s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl num">26</span><span class="hl std">))</span>
+
+<span class="hl com">#1960s</span>
+<span class="hl std">alldata1960</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1960-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;1969-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata1960</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata1960</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] -0.3903999
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata1960</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata1960</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata1960</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata1960</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;1960s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">21</span><span class="hl std">,</span><span class="hl num">25</span><span class="hl std">))</span>
+
+<span class="hl com">#1970s</span>
+<span class="hl std">alldata1970</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1970-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;1979-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata1970</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata1970</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] -0.081094
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata1970</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata1970</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata1970</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata1970</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;1970s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">19</span><span class="hl std">,</span><span class="hl num">24</span><span class="hl std">))</span>
+<span class="hl com">#1980s</span>
+<span class="hl std">alldata1980</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1980-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;1989-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata1980</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata1980</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.434521
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata1980</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata1980</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata1980</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata1980</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;1980s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">20</span><span class="hl std">,</span><span class="hl num">22</span><span class="hl std">))</span>
+
+<span class="hl com">#1990s</span>
+<span class="hl std">alldata1990</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;1990-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;1999-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata1990</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata1990</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.7959474
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata1990</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata1990</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata1990</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata1990</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;1990s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">17</span><span class="hl std">,</span><span class="hl num">22</span><span class="hl std">))</span>
+
+<span class="hl com">#2000s</span>
+<span class="hl std">alldata2000</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;2000-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;2009-10-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata2000</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata2000</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.862757
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata2000</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata2000</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata2000</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata2000</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;2000s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">17</span><span class="hl std">,</span><span class="hl num">22</span><span class="hl std">))</span>
+
+<span class="hl com">#2010s</span>
+<span class="hl std">alldata2010</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(alldata, DATE</span> <span class="hl opt">&gt;=</span> <span class="hl str">&quot;2010-01-01&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">DATE</span> <span class="hl opt">&lt;=</span> <span class="hl str">&quot;2018-04-01&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">cor</span><span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">UNRATE,alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.9693997
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp,alldata2010</span><span class="hl opt">$</span><span class="hl std">UNRATE,</span><span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(alldata2010</span><span class="hl opt">$</span><span class="hl std">UNRATE</span> <span class="hl opt">~</span> <span class="hl std">alldata2010</span><span class="hl opt">$</span><span class="hl std">govasgdp),</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;red&quot;</span><span class="hl std">),</span><span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Gov't Expenditures as % of GDP&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Unemployment Rate&quot;</span><span class="hl std">,</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;2010s Unemployment vs. Gov't Expenditures&quot;</span><span class="hl std">,</span> <span class="hl kwc">pch</span><span class="hl std">=</span><span class="hl num">16</span><span class="hl std">,</span><span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;blue&quot;</span><span class="hl std">,</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">17</span><span class="hl std">,</span><span class="hl num">22</span><span class="hl std">))</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" class="plot" /></div></div>
+<p>OBSERVATION: The charts above clearly demonstrate that the correlation he presents in his scatter plot is misleading because the correlation between seasonally-adjusted unemployment and government expenditures varies wildly across each decade. He cherry picks the two decades that support his argument while failing to include the decades where the correlation is negative or very weak (1950s-80s). Therefore, the correlation between unemployment rates and government expenditures cannot be used as an argument by either side to justify their position. There are numerous factors that affect the unemployment rate so we cannot conclude that government expenditures has any impact on the unemployment rate.</p>
+
+<p> </p>
+<p>Five >>>>> </p>
+<p>
+Write code – likely using for loops – to simulate the process of “cherry picking” in Wolfers’ terminology, and use it to evaluate the seriousness of this part of the criticism. Some suggestions and refinements to guide your coding journey.
+(a) The code should generate two uncorrelated variables x and y (e.g., from a Normal distri- bution) over a time series of 256 quarters
+(b) Using these variables, use R to compute the correlation between x and y over the last 60 quarters, over the last 61 quarters, over the last 62 quarters.... all the way until... over the last 256 quarters (the full sample).
+i. A researcher who is cherry picking the begin date will then select the lowest corre- lation. Have your code do this and store the maximum “cherry picked” correlation, but for comparison, you should also store the correlation over the entire sample (“not cherry picked”).
+(c) Repeatthisprocessfor1000possible“cherrypicked”correlationsand“notcherrypicked” correlations. Store the output.
+i. Are the cherry picked correlations different than the not cherry picked correlations? Use both visual (plots to compare) and numerical evidence (t-tests).
+ii. Using the simulated cherry picked sample of correlations, conduct a t-test to evaluate whether Taylor’s computed negative correlation could be generated from this cherry picking process with zero underlying correlation.
+</p>
+<p>Create random variables and divide into full and cherry-picked sets of data</p>
+
+<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#code generates two uncorrelated variables x and y (from Normal distribution) over a time series of 256 quarters</span>
+<span class="hl std">x</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+<span class="hl std">y</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+<span class="hl std">xycor</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cor</span><span class="hl std">(x,y)</span>
+<span class="hl kwd">hist</span><span class="hl std">(y)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl std">datasetxy</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rep</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl num">100</span><span class="hl std">)</span>
+<span class="hl kwa">for</span> <span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">){</span>
+  <span class="hl std">x</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+  <span class="hl std">y</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+  <span class="hl std">datasetxy[i]</span><span class="hl kwb">=</span> <span class="hl kwd">cor</span><span class="hl std">(x,y)</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+<p>Rough view of the data</p>
+<div class="chunk" id="unnamed-chunk-9"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#optional view of data</span>
+<span class="hl kwd">summary</span><span class="hl std">(datasetxy)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -0.1653227 -0.0421612  0.0004262  0.0015909  0.0380250  0.1934265
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">head</span><span class="hl std">(datasetxy)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.0091360643 0.0541293044 0.0541981430 0.0256343954 0.0310812972
+## [6] 0.0003173823
+</pre></div>
+</div></div>
+
+<p>plot these correlations against time-frame 1954 - 2018</p>
+<div class="chunk" id="unnamed-chunk-10"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">xycordf.data</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">data.frame</span><span class="hl std">(alldata</span><span class="hl opt">$</span><span class="hl std">DATE[</span><span class="hl num">27</span><span class="hl opt">:</span><span class="hl num">282</span><span class="hl std">], datasetxy)</span>
+<span class="hl kwd">head</span><span class="hl std">(xycordf.data)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   alldata.DATE.27.282.    datasetxy
+## 1           1954-07-01 0.0091360643
+## 2           1954-10-01 0.0541293044
+## 3           1955-01-01 0.0541981430
+## 4           1955-04-01 0.0256343954
+## 5           1955-07-01 0.0310812972
+## 6           1955-10-01 0.0003173823
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">plot</span><span class="hl std">(xycordf.data</span><span class="hl opt">$</span><span class="hl std">alldata.DATE.27.282., datasetxy)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" class="plot" /></div></div>
+
+<p>find correlation over last 60 quarters</p>
+<div class="chunk" id="unnamed-chunk-11"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">xy60</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cor</span><span class="hl std">(x[</span><span class="hl num">196</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">], y[</span><span class="hl num">196</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">])</span>
+
+<span class="hl std">xyfulllist</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rep</span><span class="hl std">(</span><span class="hl num">NA</span><span class="hl std">,</span> <span class="hl num">196</span><span class="hl std">)</span>
+<span class="hl std">placeholderx</span> <span class="hl kwb">&lt;-</span> <span class="hl num">0</span>
+<span class="hl std">placeholdery</span> <span class="hl kwb">&lt;-</span> <span class="hl num">0</span>
+<span class="hl kwa">for</span> <span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">196</span><span class="hl std">) {</span>
+  <span class="hl std">placeholderx</span> <span class="hl kwb">&lt;-</span> <span class="hl num">197</span> <span class="hl opt">-</span> <span class="hl std">i</span>
+  <span class="hl std">placeholdery</span> <span class="hl kwb">&lt;-</span> <span class="hl num">197</span> <span class="hl opt">-</span> <span class="hl std">i</span>
+  <span class="hl std">xyfulllist[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cor</span><span class="hl std">(x[placeholderx</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">], y[placeholdery</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">])</span>
+<span class="hl std">}</span>
+
+<span class="hl com">#correlation over full plot = 0.03561521</span>
+<span class="hl com">#max correlation within sample = 0.04351795 with 121 observations</span>
+<span class="hl kwd">cor</span><span class="hl std">(x,y)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] -0.1099148
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">max</span><span class="hl std">(xyfulllist)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] -0.06103934
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">whichset</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">61</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">)</span>
+<span class="hl std">xyfulldf</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">data.frame</span><span class="hl std">(whichset, xyfulllist)</span>
+<span class="hl std">sortedxy</span> <span class="hl kwb">&lt;-</span> <span class="hl std">xyfulldf[</span><span class="hl kwd">order</span><span class="hl std">(xyfulllist),]</span>
+<span class="hl com">#last position of this sorted dataframe willshow which set of data has the highest correlation</span>
+</pre></div>
+</div></div>
+
+<div class="chunk" id="unnamed-chunk-12"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">orig1000</span> <span class="hl kwb">&lt;-</span> <span class="hl num">NA</span>
+<span class="hl std">cherr1000</span> <span class="hl kwb">&lt;-</span> <span class="hl num">NA</span>
+
+<span class="hl kwa">for</span> <span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">1000</span><span class="hl std">){</span>
+
+  <span class="hl std">xyfulllist1</span> <span class="hl kwb">&lt;-</span> <span class="hl num">NA</span>
+
+  <span class="hl std">placeholderx1</span> <span class="hl kwb">&lt;-</span> <span class="hl num">0</span>
+  <span class="hl std">placeholdery1</span> <span class="hl kwb">&lt;-</span> <span class="hl num">0</span>
+
+  <span class="hl std">x2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+  <span class="hl std">y2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+
+  <span class="hl std">orig1000[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cor</span><span class="hl std">(x2,y2)</span>
+
+  <span class="hl kwa">for</span> <span class="hl std">(k</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">196</span><span class="hl std">) {</span>
+    <span class="hl std">x1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+    <span class="hl std">y1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">256</span><span class="hl std">,</span> <span class="hl kwc">mean</span><span class="hl std">=</span><span class="hl num">0</span><span class="hl std">,</span> <span class="hl kwc">sd</span><span class="hl std">=</span><span class="hl num">1</span><span class="hl std">)</span>
+
+    <span class="hl std">placeholderx1</span> <span class="hl kwb">&lt;-</span> <span class="hl num">197</span> <span class="hl opt">-</span> <span class="hl std">k</span>
+    <span class="hl std">placeholdery1</span><span class="hl kwb">&lt;-</span> <span class="hl num">197</span> <span class="hl opt">-</span> <span class="hl std">k</span>
+    <span class="hl std">xyfulllist1[k]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">cor</span><span class="hl std">(x1[placeholderx1</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">], y1[placeholdery1</span><span class="hl opt">:</span><span class="hl num">256</span><span class="hl std">])</span>
+  <span class="hl std">}</span>
+  <span class="hl std">cherr1000[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">max</span><span class="hl std">(xyfulllist1)</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+
+<p>plot cherry picked vs. original
+</p>
+<div class="chunk" id="unnamed-chunk-13"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">hist</span><span class="hl std">(orig1000,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">0.5</span><span class="hl std">),</span><span class="hl kwc">xlim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl opt">-</span><span class="hl num">.3</span><span class="hl std">,</span><span class="hl num">.5</span><span class="hl std">),</span> <span class="hl kwc">ylim</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">290</span><span class="hl std">),</span> <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Original Correlation vs. Cherry-Picked&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">hist</span><span class="hl std">(cherr1000,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl kwd">rgb</span><span class="hl std">(</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">0</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">0.5</span><span class="hl std">),</span> <span class="hl kwc">add</span><span class="hl std">=T)</span>
+<span class="hl kwd">box</span><span class="hl std">()</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure1/unnamed-chunk-13-1.png" title="plot of chunk unnamed-chunk-13" alt="plot of chunk unnamed-chunk-13" class="plot" /></div></div>
+<p> t test to compare two datasets</p>
+<div class="chunk" id="unnamed-chunk-14"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">t.test</span><span class="hl std">(cherr1000, orig1000)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  cherr1000 and orig1000
+## t = 102.41, df = 1815.3, p-value &lt; 2.2e-16
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  0.2481496 0.2578401
+## sample estimates:
+##  mean of x  mean of y 
+## 0.25360083 0.00060598
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl com">#t = 102.26, df = 1847.5, p-value &lt; 2.2e-16</span>
+<span class="hl com">#this p-value indicates that these two datasets are indeed statistically significant</span>
+<span class="hl com">#the high positive t value indicates that the cherry picked data pushes the mean far in the positive direction</span>
+</pre></div>
+</div></div>
+
+<p>
+#Taylor's correlation (1990-2010) = 0.8242042
+</p>
+<div class="chunk" id="unnamed-chunk-15"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#compare cherry-picked data to Taylor's correlation</span>
+<span class="hl kwd">t.test</span><span class="hl std">(cherr1000,</span> <span class="hl kwc">mu</span><span class="hl std">=</span><span class="hl num">0.8242042</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	One Sample t-test
+## 
+## data:  cherr1000
+## t = -395.32, df = 999, p-value &lt; 2.2e-16
+## alternative hypothesis: true mean is not equal to 0.8242042
+## 95 percent confidence interval:
+##  0.2507684 0.2564332
+## sample estimates:
+## mean of x 
+## 0.2536008
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl com">#t = -378.73, df = 999, p-value &lt; 2.2e-16</span>
+<span class="hl com"># The p-value indicates there is a statistically significant difference between the cherry-picked data and Taylor's</span>
+<span class="hl com"># This indicates that it is very unlikely Taylor cherry-picked his data and he reported a valid correlation</span>
+</pre></div>
+</div></div>
+<p> OBSERVATION::
+After iterating through the full dataset of correlations between random variables and comparing it to the cherry-picked data, it is clear how much of an impact this technique can have on the final results. The full data is centered around a mean of 0 while the cherry-picked data is centered around a mean of .25 and has very little overlap with the original data.
+</p>
+<p>
+According to the t-test between the full data set and cherry-picked data, the p-value indicates the two datasets are statistically significant at the 5% level. A high t-value of 102 indicates that the cherry-picked sample is 102 standard errors above the full dataset mean.
+</p>
+<p>
+According to the t-test between the cherry-picked data and Taylor’s correlation of 0.8242042, the p-value indicates these results are statistically significant and the t-value of -382 indicates that the cherry-picked data is 382 standard errors below Taylor’s strong correlation.
+</p>
+<p>
+CONCLUSION: After running a cherry-picking data experiment on two purely random variables, we must reject our null hypothesis that Taylor’s data is cherry-picked using a similar method. The odds of finding such a strong correlation are just too low to be reasonably plausible. A correlation between his original data points certainly exists to some extent.
+</p>
+<p>
+However, just because we are ruling out this version of cherry-picking data in Taylor’s analysis does not mean we can rule out other forms of bias. Taylor chose a convenient time period to demonstrate his point without explaining that this small sample did not represent the correlation over time for all of the data available. Indeed, economics is a complex issue involving many moving pieces such as action taken by the federal reserve, the politics of the administration currently in power, and the overall strength of the economy at the time which makes it hard to conclude a direct sole correlation between two variables, let alone at such a powerful magnitude.
+</p>
+<div class="chunk" id="unnamed-chunk-16"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">###global adjustments start 02</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">= oldwarnval)</span> <span class="hl com">#reset the warning message</span>
+<span class="hl com">###global adjustments end 02</span>
+</pre></div>
+</div></div>
+
+<p>Thank you!!</p>
+</body>
+</html>
