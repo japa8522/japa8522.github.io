@@ -1,19 +1,22 @@
+##$## 1
 # japa8522.github.io
-R Project One : Rstudio practice, data visualization, team work
+R Project One: Rstudio practice, data visualization, teamwork
 
-Project on data visulization and practice. We were told to implement plots using free database available online
+Project on data visualization and practice. We were told to implement plots using free database available online
 (download the .csv here: https://spacefem.com/pregnant/charts/duedate40.php )
 
-This project will help understand PLOT funtionlity usage, data mining techniques, etc.
+This project will help understand PLOT functionality usage, data mining techniques, etc.
+Project page : https://japa8522.github.io/knit1.html
 
 
-
+##$## 2
 # japa8522.github.io
-R Project Two : Rstudio practice, data visualization, team work
+R Project Two: Rstudio practice, data visualization, teamwork
 
-Project on data visulization and practice. We were told to implement plots using free database available online
-(download the .csv here: https://spacefem.com/pregnant/charts/duedate40.php )
+Project on data visualization and practice. We were told to implement plots using free database available online
+(download the .csv here: https://fred.stlouisfed.org/ ) note: financial data.
 
-This project will help understand PLOT/correlation/ slicing and dicing funtionlity usage, data mining techniques, etc.
+This project will help understand PLOT/correlation/ slicing and dicing / statistical inference concept usage, data mining techniques, etc.
+Project page : https://japa8522.github.io/ProjectTwo.html
 
 
