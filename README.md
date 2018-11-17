@@ -1,6 +1,8 @@
+japa8522.github.io
+
 ##$## 1
-# japa8522.github.io
-R Project One: Rstudio practice, data visualization, teamwork
+# R Project One: 
+Rstudio practice, data visualization, teamwork
 
 Project on data visualization and practice. We were told to implement plots using free database available online
 (download the .csv here: https://spacefem.com/pregnant/charts/duedate40.php )
@@ -10,8 +12,8 @@ Project page : https://japa8522.github.io/knit1.html
 
 
 ##$## 2
-# japa8522.github.io
-R Project Two: Rstudio practice, data visualization, teamwork
+# R Project Two
+Rstudio practice, data visualization, teamwork
 
 Project on data visualization and practice. We were told to implement plots using free database available online
 (download the .csv here: https://fred.stlouisfed.org/ ) note: financial data.
