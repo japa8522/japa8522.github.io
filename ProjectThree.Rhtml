@@ -1,0 +1,589 @@
+<html>
+
+<head>
+<title>YouTube Attention and Review</title>
+</head>
+
+<body>
+<p>#Project #3: YouTube Attention and Review</p>
+<p>#Group #7</p>
+<p>#Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, & Griffin Parr</p>
+<p>Introduction<p>
+<p>
+There are 98 files, both in revenue and video folder. There is also an additional file containing video metadata. Youtube account holder did a small research experiment, he created 98 videos and 50% of them contained ads and 50% were not. Then one certain day he switched the ad containing videos to non-ad containing videos and visa-versa. </br> His aim to check, whether this action triggered high views in any section of videos or does the earning factor impacted?
+</p>
+
+
+<p>
+This is an exercise in merging disparate data sources into a useful data set, and using the merged data set to perform some useful analysis.
+</p>
+
+<p></br>PartOne >>>>> <p>
+<p>Read in the revenue and the video data into separate objects (e.g., revs and vids), and then merge the revenue and video data into a common data frame that day x video observations on revenues and video characteristics for all of the videos (98 in total) and all of the days in the sample (from September 1, 2011 to March 20, 2012).
+</p>
+<p>
+By the end of “Part 1,” you should have a fully assembled data set with the following characteristics:</br>
+• Each observation is at the date-video level.</br>
+• There should be fields for “daily_earnings” (“Total estimated earnings” renamed), “views”,
+“average_watch_time” (“Average view duration” renamed), “video_id” (this should match the format of the “video.id” field from “adinstream.csv,” which we went over in class on Oct 8/9), and “DATE” (the date field, formatted as a “Date” object; see help(as.Date()), or Google information on Dates in R).</br>
+• Please also create variables within this data frame for “earnings_per_view” (daily earnings / views).</br>
+• You should also merge onto this dataset the “instream.csv” data set, which contains information about the experiment I ran regarding pre-roll ads placed on these videos. We discussed this in class (Experimenting</br>
+As a summary, produce both tabular and graphical summary information on daily_earnings, views, average_watch_time. Specifically, it would be useful to report the mean, standard deviation, and median of each of these variables. Also, produce a boxplot for each variable to summarize the distribution of values these variables takes on.
+</p>
+
+<!--begin.rcode
+#author:  Team 7
+#name:    #Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, & Griffin Parr
+#purpose: YouTube Attention and Review
+#date:    2018.11.17
+#version: R version 3.5.1
+
+##global adjustments starts 01
+rm(list=ls())
+#seed for replication
+set.seed(100)
+oldwarnval <- getOption("warn") #preserve old value
+options(warn = -1) #warnings are silent now
+##global adjustments ends 01
+
+revenues_fp <- "~/Downloads/Tony/Project 3/YouTube2013Attention/Revenues"
+revenues_filename <- "/Users/Priyanka/Downloads/Tony/Project 3/YouTube2013Attention/Revenues/Revenue"
+videos_fp <- "~/Downloads/Tony/Project 3/YouTube2013Attention/Videos"
+videos_filename <- "/Users/Priyanka/Downloads/Tony/Project 3/YouTube2013Attention/Videos/Video"
+adinstream = "/Users/Priyanka/Downloads/Tony/Project 3/adinstream.csv"
+
+# function to read and merge data
+folderdata = function(paths){
+  dat = NULL
+  for(i in 1:length(paths)){
+    this = read.csv(paths[i], header=TRUE, stringsAsFactors = FALSE)
+    this = cbind(this, paths[i]) #Read in the videoID
+    dat = rbind(dat, this)
+  }
+  return(dat)
+}
+
+end.rcode-->
+
+
+
+<p>Read in folder</p>
+<!--begin.rcode
+#Read in youtube folder
+base = revenues_fp
+yt_paths = list.files(base, full.names=TRUE)
+revs = folderdata(yt_paths)
+names(revs) <- c("Date", "Total.earn", "AFV.earn", "YT.earn", "Transactions", "VideoID")
+
+revs[,6] <- gsub(revenues_filename, "", revs[,6])
+revs[,6] <- gsub(".csv", "", revs[,6])
+
+#Read in video folder
+base = videos_fp
+v_paths = list.files(base, full.names=TRUE)
+vids = folderdata(v_paths)
+names(vids) <- c("Date", "Views", "Est.min.watched", "Avg.view.duration", "Unq.cookies", "VideoID")
+
+vids[,6] <- gsub(videos_filename, "", vids[,6])
+vids[,6] <- gsub(".csv", "", vids[,6])
+end.rcode-->
+
+
+<p>Merge files</p>
+<!--begin.rcode
+#Merge vids & revs by Date
+for(i in 1:nrow(vids)){
+  if(is.na(as.Date(vids[i,1], format="%b %d, %Y")) == FALSE){
+    vids$Date[i] <- as.character(as.Date(vids$Date[i], format="%b %d, %Y"))
+  }else{
+    vids$Date[i] <- as.character(as.Date(vids$Date[i], format="%d-%b-%y"))
+  }
+}
+for(i in 1:nrow(revs)){
+  if(is.na(as.Date(revs[i,1], format="%b %d, %Y")) == FALSE){
+    revs$Date[i] <- as.character(as.Date(revs$Date[i], format="%b %d, %Y"))
+  }else{
+    revs$Date[i] <- as.character(as.Date(revs$Date[i], format="%d-%b-%y"))
+  }
+}
+
+rv <- merge(vids, revs, by=c("Date", "VideoID"))
+
+
+end.rcode-->
+
+<p>Colum adjustments</p>
+<!--begin.rcode
+
+#rename columns
+colnames(rv)[colnames(rv)=="Total.earn"] <- "daily_earnings"
+colnames(rv)[colnames(rv)=="Avg.view.duration"] <- "average_watch_time"
+
+#remove dollar signs and make daily_earnings column numeric
+rv$daily_earnings <- as.numeric(gsub("\\$","", rv$daily_earnings))
+
+#create earnings per view column
+rv$earnings_per_view <- rv$daily_earnings/rv$Views
+
+#drop column names we do not need
+drop <- c("AFV.earn","YT.earn","Transactions","Est.min.watched","Unq.cookies")
+rv1 = rv[,!(names(rv) %in% drop)] #new rv
+
+end.rcode-->
+
+<p>Merge metadata colums on "Ads and NoAds, visa-versa"</p>
+<!--begin.rcode
+
+#merge data with adsinstream.csv (describes pre-roll ads)
+#import new csv file
+instream <- read.csv(adinstream)
+colnames(instream)[colnames(instream)=="video.id"] <- "VideoID"
+
+##Instream videoID is poorly name--- rename to match rv1
+instream$VideoID <- toupper(instream$VideoID) #all convert to upper case
+rv1$VideoID <- toupper(rv1$VideoID)
+setdiff(unique(rv1$VideoID), unique(instream$VideoID)) #output: "REG1"   "REG2"   "WHATIS" "REG3"  
+instream[which(instream$VideoID == "REGRESSION1"),]$VideoID <- "REG1"
+instream[which(instream$VideoID == "REGRESSION2"),]$VideoID <- "REG2"
+instream[which(instream$VideoID == "REGRESSION3"),]$VideoID <- "REG3"
+instream[which(instream$VideoID == "WHATISINTRO"),]$VideoID <- "WHATIS"
+
+#Merge instream and rv1
+rv1$annoy_before <- NA
+rv1$annoy_after <- NA
+for(i in 1:nrow(rv1)){
+  if(is.na(match(rv1$VideoID[i], instream$VideoID)) == FALSE){
+    n <- match(rv1$VideoID[i], instream$VideoID)
+    rv1[i,c(7,8)] <- instream[n, c(3,4)]
+  }
+}
+
+end.rcode-->
+
+<p>View the data and summary plots</p>
+<!--begin.rcode fig.width=10, fig.height=10
+
+#Data Summary & Analysis for Daily Earnings:
+summary(rv1$daily_earnings)
+sd(rv1$daily_earnings)
+par(mfrow=c(1,2))
+boxplot(rv1$daily_earnings, xlab='Daily Earnings', main = "Daily Earnings with Outliers" 
+        , notch = TRUE, outline = TRUE, col="light blue")
+boxplot(rv1$daily_earnings, xlab='Daily Earnings', main = "Daily Earnings without Outliers" 
+        ,notch = TRUE, outline = FALSE, col="light blue")
+par(mfrow=c(1,1))
+hist(rv1$daily_earnings, xlab='Daily Earnings', main = "Daily Earnings Distribution", col="light blue") 
+
+#Data Summary & Analysis for Views:
+summary(rv1$Views)
+sd(rv1$Views)
+par(mfrow=c(1,2))
+boxplot(rv1$Views, xlab='Views', main = "Views with Outliers" 
+        , col="light blue", notch = TRUE, outline = TRUE)
+boxplot(rv1$Views, xlab='Views', main = "Views without Outliers" 
+        , col="light blue", notch = TRUE, outline = FALSE)
+par(mfrow=c(1,1))
+hist(rv1$Views, xlab='Views', main = "Views Counting", col="light blue")
+
+#Data Summary & Analysis for Average Watch Time:
+summary(rv1$average_watch_time)
+sd(rv1$average_watch_time)
+par(mfrow=c(1,2))
+boxplot(rv1$average_watch_time, xlab='Avg Watch Time'
+        , ylab='Minutes', main = "Avg Watch Time with Outliers", 
+        col="light blue", notch = TRUE, outline = TRUE)
+boxplot(rv1$average_watch_time, xlab='Avg Watch Time'
+        , ylab='Minutes', main = "Avg Watch Time without Outliers", 
+        col="light blue", notch = TRUE, outline = FALSE)
+par(mfrow=c(1,1))
+hist(rv1$average_watch_time, xlab='Avg Watch Time', 
+     main = "Avg Watch Time Counting", col="light blue")
+
+end.rcode-->
+<p>
+</br>
+OBSERVATION::</br>
+Daily Earnings Summary: </br>
+    Mean: 0.1008</br>
+    Standard Deviation: 0.2338 </br>
+    Median: 0.0300 </br></br>
+Daily Earnings shows a few significant outliers, but most of the earnings are under $1/day. The significant skew in this data indicates that most of our income can be attributed to a small number of videos. These outliers do not seem to be typos, but relevant pieces of data that tells us about the skewed nature of our profitability.</br> </br>
+
+Views Summary:</br>
+Mean: 22.3</br>
+Standard Deviation: 22.97595 </br>Median: 15.0</br></br>
+Views are also highly skewed with a long right tail. Notice the heavy right tail have significant impact on the mean as the median is smaller than the average, with the great dispersion between the number of views. Despite the indication of these outliers, we wouldn’t consider removing any data points in this case, because these are not outliers, but an indicator that a few videos are receiving a significantly larger proportion of the views.</br></br>
+
+Average Watch Time Summary:</br>
+Mean: 3.232</br>
+Standard Deviation: 1.47565 </br>Median: 3.120</br></br>
+Average watch time is fairly normally distributed with a mean of 3.2 and a slight right tail. It is centered around a mean of 3.2 indicating a fairly short attention span for our viewers. </br></br>
+
+</br>
+</p>
+
+
+
+
+<p></br></br>PartTwo >>>>> <p>
+<p>
+Use the merged data set you constructed in Part 1 to answer the following questions:</br>
+</br>
+1. During the pre-period (before Feb 5th),</br>
+i) Is average watch time different for videos that have pre-roll ads versus not?</br> ii) Is the number of views different for videos that have pre-roll ads versus not?</br>
+For each comparison, conduct an appropriate hypothesis test, and offer an interpretation in the context of the problem.</br>
+</p>
+
+<p>
+● Is the average watch time different for videos that have pre-roll ads versus not?</br>
+○ H0 = The average watch time is not different with pre-rolls ads versus those that
+do not have pre-roll ads </br>
+○ H1 = The average watch time is different for videos with pre-rolls ads versus
+those that do not have pre-roll ads </br>
+</p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+##Q1: During the pre-period (before Feb 5th):
+
+#Eliminate rows with 1 in both annoy_after & before
+rv2 <- rv1[-c(which(rv1$annoy_before==1 & rv1$annoy_after==1)),]  #remove inconsitancy
+Q1_pre <- subset(rv2, Date < "2013-02-05" & annoy_before == "1")
+Q1_no <- subset(rv2, Date < "2013-02-05" & annoy_before == "0")
+
+#Unpaired Two-Samples T-test
+t.test(Q1_pre$average_watch_time, Q1_no$average_watch_time) 
+end.rcode-->
+
+<p>
+OBSERVATION::</br>
+This t-test tells us that we should reject the null hypothesis because the average watch time difference between videos with pre-roll ads and those without pre-roll is statistically significant. With a p-value of less than .001 and a t-test statistic of -8.3977, which translates to the mean of pre-roll average watch time being over 8 standard errors below the dataset mean of no pre-roll average watch time.
+</br></br>
+</p>
+
+<p>
+● Is the number of views different for videos that have pre-roll ads versus not?</br>
+○ H0 = The number of views is not different for videos that have pre-roll ads versus
+not</br>
+○ H1 = The number of views is different for videos that have pre-roll ads versus not
+</p></br>
+<!--begin.rcode fig.width=10, fig.height=10
+t.test(Q1_pre$Views, Q1_no$Views)
+end.rcode-->
+
+<p>
+OBSERVATION::</br>
+This t-test tells us that we should reject the null hypothesis because the views for videos with pre-roll ads and those without is statistically significant. With a p-value of less than .05 and a t-test statistic of -12.159, we see that the mean of pre-roll views is more than 12 standard errors below the dataset mean of no pre-roll views. Notice that with ads, views and average watch time is more spread out and significantly more right skewed.
+</br></br>
+</p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+Q1_plot <- subset(rv2, Date < "2013-02-05")
+boxplot(average_watch_time~annoy_before, data=Q1_plot, col="light blue", 
+        main="Avg. Watch Time vs. Pre-roll Ads (Pre-period)"
+        , ylab="Avg. Watch Time", xlab="Pre-roll Ads",
+        names=c("No Ads","Ads"), notch = TRUE, outline = TRUE)
+boxplot(Views~annoy_before, data=Q1_plot, col="light blue", 
+        main="Views vs. Pre-roll Ads (Pre-period)", ylab="Views", xlab="Pre-roll Ads",
+        names=c("No Ads","Ads"), notch = TRUE, outline = TRUE)
+end.rcode-->
+
+<p>
+</br></br>
+2. In the full sample,</br>
+i) How does attention (measured by average watch time) relate to daily earnings on a
+video? Is this relationship statistically significant? </br>
+ii) How do views relate to daily earnings on a video? Is this relationship statistically
+significant? </br>
+iii) How does attention relate to views on a video? Is this relationship statistically significant?</br>
+<p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+##Q2:In the full sample:
+##Relationship between daily earnings vs. average watch time?
+lm_awt<- lm(rv1$daily_earnings~rv1$average_watch_time)
+summary(lm_awt)
+par(mfrow=c(1,1))
+plot(rv1$daily_earnings~rv1$average_watch_time,
+     main = "Avg. Watch Time vs. Daily earnings" , 
+     xlab = "Avg. Watch Time", ylab = "Daily earnings",
+     lwd = 2, pch =20)
+abline(coefficients(lm_awt)[1],coefficients(lm_awt)[2], col='red') #reg line
+par(mfrow=c(2,2))
+plot(lm_awt)
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Average Watch Time on Daily Earnings:</br>    Daily_earnings = 0.082214 + 0.005762*(average_watch_time)</br></br>
+The relationship between these two variables is statistically significant as p-value of the slope is less than 0.05. For every one unit increase in average watch time, there is a 0.00576 dollar increase in daily earning. The intercept is statistically significant with a p-value less than 0.05. The intercept shows that at a watch time of 0 (x=0), daily earnings is predicted to be $0.0822. To us, this indicates that this intercept is meaningless or that youtubers may receive a base amount of compensation for simply uploading a video to their channel. In addition, a R-square of 0.125% indicating that 0.125% of variability in daily earnings can be explained by average watch time.
+</br>
+</p>
+
+
+<!--begin.rcode fig.width=10, fig.height=10
+##Relationship between daily earnings vs. views?
+lm_v <- lm(rv1$daily_earnings~rv1$Views)
+summary(lm_v)
+par(mfrow=c(1,1))
+plot(rv1$daily_earnings~rv1$Views,
+     main = "Views vs. Daily earnings" , xlab = "Views", ylab = "Daily earnings",
+     lwd = 2, pch =20) #eliminate outliers? ylim?
+abline(coefficients(lm_v)[1],coefficients(lm_v)[2], col='red') #reg line
+par(mfrow=c(2,2))
+plot(lm_v)
+
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Views on Daily Earnings:</br>    Daily_earnings = -3.074e-03 + 4.659e-03*(views)</br></br>
+The relationship between these two variables is statistically significant because the p-value is less than 0.05. For every unit increase in views, there is a 4.659e-03 unit increase in daily earnings. The intercept is not statistically significant and is also meaningless because it impossible to have negative daily earnings (y=-3.074e-03 at x=0). In addition, a R-square of .2095 indicates that 20.95% of variability in daily earnings can be explained by views.
+</br>
+</p>
+
+<!--begin.rcode fig.width=10, fig.height=10
+##Relationship between average watch time vs. views?
+lm_awt_v <- lm(rv1$Views~rv1$average_watch_time)
+summary(lm_awt_v)
+par(mfrow=c(1,1))
+plot(rv1$Views~rv1$average_watch_time,
+     main = "Views vs. Avg. Watch Time" , xlab = "Avg. Watch Time", ylab = "Views",
+     lwd = 2, pch =20) #eliminate outliers? ylim?
+abline(coefficients(lm_awt_v)[1],coefficients(lm_awt_v)[2], col='red') #reg line
+par(mfrow=c(2,2))
+plot(lm_awt_v)
+
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Average Watch Time on Views:</br>    Views = 20.8245 + 0.4572*(average_watch_time)</br></br>
+The relationship between these two variables is statistically significant because the p-value is less than 0.05. For every one unit increase in average watch time, there is a 0.4572 unit increase in views. The intercept is statistically significant and meaningful with p-value less than 0.05. For an average watch time of 0 (x=0), there will be 20.82 views on average. This make sense because it is fairly common to click on a video by mistake and then quickly leave the video, registering a view but a watch time of zero. In addition, a R-square of .000794 indicates that 0.0794% of the variability in views can be explained by average watch time.
+</br>
+</p>
+
+
+<p>
+</br></br>
+3. Define a date-level variable (named “post”) that equals whether the date is during the post period (Feb 5 or later, = 1) or during the pre period (Feb 4 or earlier, =0). Using this variable and regression tools, estimate the specification:</br>
+</br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑝𝑜𝑠𝑡- + 𝜖,-
+</br></br>
+
+For your estimate of 𝛽2, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+##Q3:
+##Relationship between post vs. daily earnings?
+rv2$post <- ifelse(rv2$Date < "2013-02-05", 0, 1)
+lm_p <- lm(daily_earnings~post, data=rv2)
+summary(lm_p)
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Post on Daily Earnings:</br>
+     Daily_earnings = 0.104190 - 0.022166*(post)</br></br>
+The impact of post on daily earnings is significant with a p-value less than 0.05, indicating that there is a difference in daily earnings between pre and post period. The statistically significant intercept shows that the average daily earning before February 5th is 0.104, while the average daily earnings decrease by 0.0221 after February 5th. This decrease in daily earnings can be attributed to significant outliers in daily earning before February 5th which significantly increased the overall average earnings. R-squared of .00144 indicates that 0.144% of variability in daily earnings can be explained by pre/ post-period.</br>
+In addition, the great difference in the sample size of pre (n=11371) and post period (n=3097) may have unpredictable impact the linear regression model.
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+par(mfrow=c(1,2))
+boxplot(daily_earnings~post, data=rv2, col="light blue", 
+        main="Daily Earnings vs. Pre & Post Period (without outliers)", ylab="Daily Earnings", xlab="Pre & Post Period",
+        names=c("Before Feb 5th","After Feb 5th"), notch = TRUE, outline = FALSE)
+boxplot(daily_earnings~post, data=rv2, col="light blue", 
+        main="Daily Earnings vs. Pre & Post Period (with outliers)", ylab="Daily Earnings", xlab="Pre & Post Period",
+        names=c("Before Feb 5th","After Feb 5th"), notch = TRUE, outline = TRUE)
+end.rcode-->
+
+<p>
+</br></br>
+4. Define a video-level variable (named “annoy_later”) that equals whether a video went from no
+pre-roll advertisements to pre-roll advertisements in the post period (=1 if no pre-rollàpre-roll, =0 otherwise). Using this variable and regression tools, estimate the specification:</br></br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟, + 𝜖,-
+
+</br>For your estimate of 𝛽2, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+##Q4
+##Relationship between annoy later vs. daily earnings?
+rv2$annoy_later <- ifelse(rv2$annoy_before==0 & rv2$annoy_after==1, 1, 0)
+lm_al <- lm(daily_earnings~annoy_later, data=rv2)
+summary(lm_al) 
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Annoy Later on Daily Earnings:</br>
+      daily earnings = 0.068878 + 0.055371*(annoy_later)</br></br>
+The impact of annoy_later on daily earnings was significant with a p-value of less than 0.05, indicating that there is a difference in daily earnings when videos went from no
+pre-roll advertisements to pre-roll advertisements and pre-roll advertisements to no pre-roll advertisements during the post period. In the other words, on average, the videos that were selected to run ads before Feb 5th are less profitable than those after Feb 5th. The statistically significant intercept shows that the average daily earning for videos chosen to pre-roll ads in pre-period is 0.0688, while the average daily earnings increase by 0.0553 for those have pre-roll ads in post-period. In addition, R-squared of 0.0137 indicates that 1.37% of variability in daily earnings can be explained by the time period of when the ads were shown (annoy later or before).
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+boxplot(daily_earnings~annoy_later, data=rv2, col="light blue", 
+        main="Daily Earnings vs. Annoy Later/ Before (W/O Outliers)"
+        , ylab="Daily Earnings", xlab="Annoy Later/ Before",
+        names=c("Annoy before","Annoy later"), notch = TRUE, outline = FALSE)
+boxplot(daily_earnings~annoy_later, data=rv2, col="light blue", 
+        main="Daily Earnings vs. Annoy Later/ Before (W/ Outliers)",
+        ylab="Daily Earnings", xlab="Annoy Later/ Before",
+        names=c("Annoy before","Annoy later"), notch = TRUE, outline = TRUE)
+
+end.rcode-->
+
+
+<p>
+</br></br>
+5. Putting the previous two parts together, estimate the following multiple regression equation specification:</br></br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟, + 𝛽7𝑝𝑜𝑠𝑡- + 𝛽8𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟,×𝑝𝑜𝑠𝑡- + 𝜖,-
+</br>For your estimate of 𝛽8, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+##Q5
+##Relationship between annoy later, post, and their interaction vs. daily earnings?
+lm_pal <- lm(daily_earnings~post*annoy_later, data=rv2)
+summary(lm_pal)
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Post and Annoy Later (and interaction) on Daily Earnings:</br>
+        Daily_Earnings = 0.066961 + 0.008918(post)+0.067377*(annoy_later)-0.056208*(post)*(annoy_later)</br></br>
+With the multiple regression model, the main effect of annoy later is statistically significant (p < 0.05) while the main effect of post is not. This indicates that, on average, the videos that were selected to run ads before Feb 5th make $0.0673 less than those run after Feb 5th. In previous linear regression models such as #3, the relationship shows that pre-period generates more profit than post-period, but in this model the effect of post is statistically insignificant so there is no real difference in daily earnings between videos before or after Feb 5th. However, once we combine post with annoy later, they jointly provide an explanation for daily earnings even if we do not have the statistical power to disentangle their individual effects here. </br>
+An R-squared of .0175, indicates that the two variables, annoy later and post together can explain 1.75% of the variability in daily earnings. In summary, videos without ads before Feb 5th generate highest daily earnings ($0.134), followed by videos with ads after Feb 5th ($0.0870), followed by videos with ads after Feb 5th ($0.0758) and finally without ads before Feb 5th ($0.0669).
+</br></br>
+<table style="width:100%">
+  <tr>
+    <th>Daily Earnings</th>
+    <th>Post = 0 (Before feb 5th)</th> 
+    <th>Post = 1 (After feb 5th)</th>
+    <th>Sum across the row</th>
+  </tr>
+  <tr>
+    <td>Annoy_later = 0 (Ads during pre-period)</td>
+    <td>0.0669 (Ads)</td> 
+    <td>0.0758 (No Ads)</td>
+    <td>0.1427</td>
+  </tr>
+  <tr>
+    <td>Annoy_later = 1 (Ads during post-period)</td>
+    <td>0.134 (No Ads)</td> 
+    <td>0.0870 (Ads)</td>
+    <td>0.221</td>
+  </tr>
+  <tr>
+    <td>Sum across the column</td>
+    <td>0.201</td> 
+    <td>0.162</td>
+    <td></td>
+  </tr>
+</table>
+
+</br></br>
+figureeeeeeeeeeeeee
+
+</p>
+
+
+<p></br></br></br>
+</br>6. For Questions 3, 4, and 5, please repeat the analysis, but using 𝑎𝑣𝑒𝑟𝑎𝑔𝑒_𝑤𝑎𝑡𝑐h _𝑡𝑖𝑚𝑒 as the dependent variable, instead of daily earnings.
+</br>
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+##Q6: average_watch_time and how each variable impacts it
+summary(lm(average_watch_time~post, data=rv2))
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Post on Average Watch time:</br>
+      Average Watch Time = 3.22963 + 0.11862*(post)</br></br>
+The impact of post on average watch time was significant with a p-value less than 0.05, indicating that there is a difference in average watch time between the pre and post periods. The statistically significant intercept shows that the average watch time before February 5th is 3.22, while the average watch time increased by 0.11862 after February 5th. This might indicate that as time passed, the channel started to grab more attention. An R-squared of .00103 indicates that 0.103% of variability in average watch time can be explained by timing.
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+summary(lm(average_watch_time~annoy_later, data=rv2)) 
+
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Annoy Later on Average Watch time:</br>
+      average_watch_time = 3.14827 + 0.19337*(annoy_later)</br></br>
+The impact of annoy_later on average watch time was significant with a p-value less than 0.05, indicating that there is a difference in average watch time between videos that transitioned from no pre-roll advertisements to pre-roll advertisements and vice versa during the post period. This means that on average, the videos that were selected to run ads before Feb 5th attract more attention than those after Feb 5th. The intercept shows that the average watch time for videos chosen to run pre-roll ads in the pre-period is 3.14, while the average watch time increases by 0.193 for those that have pre-roll ads in post-period. In addition, an R-squared of .00422 indicates that 0.422% of variability in average watch time can be explained by annoy later or before.
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+
+summary(lm(average_watch_time~post*annoy_later, data=rv2))
+
+end.rcode-->
+<p>
+OBSERVATION::</br>
+Effect of Post and Annoy Later (and interaction) on Average Watch Time:</br>
+      Average_watch_time =3.10451 +0.20358*(post) + 0.22643*(annoy_later) - 0.15345*(post)*(annoy_later)</br></br>
+With the multiple regression model, all important variables are statistically significant (p < 0.05), including the interaction between annoy later and post. While the main effect of post and annoy later preserved the pattern observed in previous linear regression model, this model helps us identify the best and worst scenarios for achieving the highest watch time. Videos with ads after Feb 5th attracted most attention (3.381), follow by videos without ads before Feb 5th (3.33)and the videos without ads after Feb 5th (3.308), and finally, the videos with ads before Feb 5th attracted the least attention (3.104).
+</br></br>
+
+<table style="width:100%">
+  <tr>
+    <th>Average Watch Time</th>
+    <th>Post = 0 (Before feb 5th)</th> 
+    <th>Post = 1 (After feb 5th)</th>
+    <th>Sum across the row</th>
+  </tr>
+  <tr>
+    <td>Annoy_later = 0 (Ads during pre-period)</td>
+    <td>3.104 (Ads)</td> 
+    <td>3.308 (No Ads)</td>
+    <td>6.41</td>
+  </tr>
+  <tr>
+    <td>Annoy_later = 1 (Ads during post-period)</td>
+    <td>3.33 (No Ads)</td> 
+    <td>3.381 (Ads)</td>
+    <td>7.14</td>
+  </tr>
+  <tr>
+    <td>Sum across the column</td>
+    <td>6.43</td> 
+    <td>6.68</td>
+    <td></td>
+  </tr>
+</table>
+</br></br>
+figureeeeeeeeeeeeee
+
+</p>
+<!--begin.rcode fig.width=10, fig.height=10
+
+interaction.plot(rv2$post, rv2$annoy_later, rv2$average_watch_time)
+
+end.rcode-->
+
+<p></br></br>PartThree >>>>> <p>
+<p>Report. Your report should provide the relevant tradeoffs for a YouTube content provider who is interested in knowing whether pre-roll advertisements will increase daily earnings, but is worried that these advertisements might reduce the amount of attention that users pay to the videos the content provider posts. If there is a significant loss of attention to the content, how much additional revenue can the content provider expect to receive to compensate for this? Please organize your discussion, graphs, and tables in a manner that is straightforward to understand for this YouTuber (who remembers loosely what a p-value is from a years-ago stats class).</p>
+<!--begin.rcode
+#data
+ads <- rbind(rv2[rv2$post==0 & rv2$annoy_later==0,]
+             , rv2[rv2$post==1 & rv2$annoy_later==1,])
+no_ads <- rbind(rv2[rv2$post==1 & rv2$annoy_later==0,]
+                , rv2[rv2$post==0 & rv2$annoy_later==1,])
+
+#Test to see if there is a diff in daily earnings, views, avg. watch time
+t.test(ads$daily_earnings, no_ads$daily_earnings)
+t.test(ads$Views, no_ads$Views)
+t.test(ads$average_watch_time, no_ads$average_watch_time)
+
+
+###global adjustments start 2
+options(warn = oldwarnval) #reset the warning message
+###global adjustments end 2
+end.rcode-->
+<p>
+CONCLUSION::</br>
+After reviewing the data, we believe we have come to several conclusions that a YouTuber can use to guide his or her decisions regarding pre-roll ads running on a channel. In general for all videos, we determined that introducing pre-roll ads when none were present decreases daily earnings, views, and average watch time (this difference is statistically significant across all variables). The magnitude of this impact varies based on other factors such as annoy later and post so more nuance can be gained from studying a particular set of users (viewers interested in economics and statistics videos may not display the same trends as those interested in popular culture). Overall, a YouTuber should think carefully about introducing ads where there were none playing before.
+
+</br></br>
+figureeeeeeeeeeeeee
+</br></br>
+
+In general, we believe that this dataset is limited due to the following reasons: First, the videos are not popular enough to observe true differences between videos, and the statistical significance levels can be attributed more to the large sample size rather than differences in the success of videos. In addition, having low R-squared values across all analysis is concerning because it does not provide insight to where the majority of the variability is coming from for daily earnings and average watch time. There are a lot of other factors that should be explored here. Regardless of the R-square, the significant coefficients still represent the mean change in the dependent variable for one unit of change in predictor. However, notice that the R-square is so low that we won’t be able to make any precise prediction, but can predict general pattern.</br></br>
+Additionally, one possible confounding factor in the design of the experiment is the unequal sample size across comparison group. When analyzing the effect of the post, pre-period group contains approximately 7000 more samples than post-period, which may be a potential confounding factor.</br></br>
+Despite these limitations in the data, we can still use the insights from this data for help in designing future studies and making limited connections between variables that YouTubers will be interested in.</br></br>
+</p>
+
+</p></br></br>Thank you!</br></p>
+</body>
+</html>

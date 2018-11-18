@@ -1,0 +1,907 @@
+<html>
+
+<head>
+<style type="text/css">
+.knitr .inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage .left {
+  text-align: left;
+}
+.rimage .right {
+  text-align: right;
+}
+.rimage .center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>YouTube Attention and Review</title>
+</head>
+
+<body>
+<p>#Project #3: YouTube Attention and Review</p>
+<p>#Group #7</p>
+<p>#Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, & Griffin Parr</p>
+<p>Introduction<p>
+<p>
+There are 98 files, both in revenue and video folder. There is also an additional file containing video metadata. Youtube account holder did a small research experiment, he created 98 videos and 50% of them contained ads and 50% were not. Then one certain day he switched the ad containing videos to non-ad containing videos and visa-versa. </br> His aim to check, whether this action triggered high views in any section of videos or does the earning factor impacted?
+</p>
+
+
+<p>
+This is an exercise in merging disparate data sources into a useful data set, and using the merged data set to perform some useful analysis.
+</p>
+
+<p></br>PartOne >>>>> <p>
+<p>Read in the revenue and the video data into separate objects (e.g., revs and vids), and then merge the revenue and video data into a common data frame that day x video observations on revenues and video characteristics for all of the videos (98 in total) and all of the days in the sample (from September 1, 2011 to March 20, 2012).
+</p>
+<p>
+By the end of “Part 1,” you should have a fully assembled data set with the following characteristics:</br>
+• Each observation is at the date-video level.</br>
+• There should be fields for “daily_earnings” (“Total estimated earnings” renamed), “views”,
+“average_watch_time” (“Average view duration” renamed), “video_id” (this should match the format of the “video.id” field from “adinstream.csv,” which we went over in class on Oct 8/9), and “DATE” (the date field, formatted as a “Date” object; see help(as.Date()), or Google information on Dates in R).</br>
+• Please also create variables within this data frame for “earnings_per_view” (daily earnings / views).</br>
+• You should also merge onto this dataset the “instream.csv” data set, which contains information about the experiment I ran regarding pre-roll ads placed on these videos. We discussed this in class (Experimenting</br>
+As a summary, produce both tabular and graphical summary information on daily_earnings, views, average_watch_time. Specifically, it would be useful to report the mean, standard deviation, and median of each of these variables. Also, produce a boxplot for each variable to summarize the distribution of values these variables takes on.
+</p>
+
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#author:  Team 7</span>
+<span class="hl com">#name:    #Jaydip Patel, Vincent Chang, Nicole Haberer, Ivy Wang, &amp; Griffin Parr</span>
+<span class="hl com">#purpose: YouTube Attention and Review</span>
+<span class="hl com">#date:    2018.11.17</span>
+<span class="hl com">#version: R version 3.5.1</span>
+
+<span class="hl com">##global adjustments starts 01</span>
+<span class="hl kwd">rm</span><span class="hl std">(</span><span class="hl kwc">list</span><span class="hl std">=</span><span class="hl kwd">ls</span><span class="hl std">())</span>
+<span class="hl com">#seed for replication</span>
+<span class="hl kwd">set.seed</span><span class="hl std">(</span><span class="hl num">100</span><span class="hl std">)</span>
+<span class="hl std">oldwarnval</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">getOption</span><span class="hl std">(</span><span class="hl str">&quot;warn&quot;</span><span class="hl std">)</span> <span class="hl com">#preserve old value</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">=</span> <span class="hl opt">-</span><span class="hl num">1</span><span class="hl std">)</span> <span class="hl com">#warnings are silent now</span>
+<span class="hl com">##global adjustments ends 01</span>
+
+<span class="hl std">revenues_fp</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;~/Downloads/Tony/Project 3/YouTube2013Attention/Revenues&quot;</span>
+<span class="hl std">revenues_filename</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;/Users/Priyanka/Downloads/Tony/Project 3/YouTube2013Attention/Revenues/Revenue&quot;</span>
+<span class="hl std">videos_fp</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;~/Downloads/Tony/Project 3/YouTube2013Attention/Videos&quot;</span>
+<span class="hl std">videos_filename</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;/Users/Priyanka/Downloads/Tony/Project 3/YouTube2013Attention/Videos/Video&quot;</span>
+<span class="hl std">adinstream</span> <span class="hl kwb">=</span> <span class="hl str">&quot;/Users/Priyanka/Downloads/Tony/Project 3/adinstream.csv&quot;</span>
+
+<span class="hl com"># function to read and merge data</span>
+<span class="hl std">folderdata</span> <span class="hl kwb">=</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">paths</span><span class="hl std">){</span>
+  <span class="hl std">dat</span> <span class="hl kwb">=</span> <span class="hl kwa">NULL</span>
+  <span class="hl kwa">for</span><span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl kwd">length</span><span class="hl std">(paths)){</span>
+    <span class="hl std">this</span> <span class="hl kwb">=</span> <span class="hl kwd">read.csv</span><span class="hl std">(paths[i],</span> <span class="hl kwc">header</span><span class="hl std">=</span><span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">stringsAsFactors</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+    <span class="hl std">this</span> <span class="hl kwb">=</span> <span class="hl kwd">cbind</span><span class="hl std">(this, paths[i])</span> <span class="hl com">#Read in the videoID</span>
+    <span class="hl std">dat</span> <span class="hl kwb">=</span> <span class="hl kwd">rbind</span><span class="hl std">(dat, this)</span>
+  <span class="hl std">}</span>
+  <span class="hl kwd">return</span><span class="hl std">(dat)</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+
+
+
+<p>Read in folder</p>
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#Read in youtube folder</span>
+<span class="hl std">base</span> <span class="hl kwb">=</span> <span class="hl std">revenues_fp</span>
+<span class="hl std">yt_paths</span> <span class="hl kwb">=</span> <span class="hl kwd">list.files</span><span class="hl std">(base,</span> <span class="hl kwc">full.names</span><span class="hl std">=</span><span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl std">revs</span> <span class="hl kwb">=</span> <span class="hl kwd">folderdata</span><span class="hl std">(yt_paths)</span>
+<span class="hl kwd">names</span><span class="hl std">(revs)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Date&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Total.earn&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;AFV.earn&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;YT.earn&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Transactions&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;VideoID&quot;</span><span class="hl std">)</span>
+
+<span class="hl std">revs[,</span><span class="hl num">6</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">gsub</span><span class="hl std">(revenues_filename,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">, revs[,</span><span class="hl num">6</span><span class="hl std">])</span>
+<span class="hl std">revs[,</span><span class="hl num">6</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">gsub</span><span class="hl std">(</span><span class="hl str">&quot;.csv&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">, revs[,</span><span class="hl num">6</span><span class="hl std">])</span>
+
+<span class="hl com">#Read in video folder</span>
+<span class="hl std">base</span> <span class="hl kwb">=</span> <span class="hl std">videos_fp</span>
+<span class="hl std">v_paths</span> <span class="hl kwb">=</span> <span class="hl kwd">list.files</span><span class="hl std">(base,</span> <span class="hl kwc">full.names</span><span class="hl std">=</span><span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl std">vids</span> <span class="hl kwb">=</span> <span class="hl kwd">folderdata</span><span class="hl std">(v_paths)</span>
+<span class="hl kwd">names</span><span class="hl std">(vids)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Date&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Views&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Est.min.watched&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Avg.view.duration&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;Unq.cookies&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;VideoID&quot;</span><span class="hl std">)</span>
+
+<span class="hl std">vids[,</span><span class="hl num">6</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">gsub</span><span class="hl std">(videos_filename,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">, vids[,</span><span class="hl num">6</span><span class="hl std">])</span>
+<span class="hl std">vids[,</span><span class="hl num">6</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">gsub</span><span class="hl std">(</span><span class="hl str">&quot;.csv&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">, vids[,</span><span class="hl num">6</span><span class="hl std">])</span>
+</pre></div>
+</div></div>
+
+
+<p>Merge files</p>
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#Merge vids &amp; revs by Date</span>
+<span class="hl kwa">for</span><span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl kwd">nrow</span><span class="hl std">(vids)){</span>
+  <span class="hl kwa">if</span><span class="hl std">(</span><span class="hl kwd">is.na</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(vids[i,</span><span class="hl num">1</span><span class="hl std">],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%b %d, %Y&quot;</span><span class="hl std">))</span> <span class="hl opt">==</span> <span class="hl num">FALSE</span><span class="hl std">){</span>
+    <span class="hl std">vids</span><span class="hl opt">$</span><span class="hl std">Date[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.character</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(vids</span><span class="hl opt">$</span><span class="hl std">Date[i],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%b %d, %Y&quot;</span><span class="hl std">))</span>
+  <span class="hl std">}</span><span class="hl kwa">else</span><span class="hl std">{</span>
+    <span class="hl std">vids</span><span class="hl opt">$</span><span class="hl std">Date[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.character</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(vids</span><span class="hl opt">$</span><span class="hl std">Date[i],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%d-%b-%y&quot;</span><span class="hl std">))</span>
+  <span class="hl std">}</span>
+<span class="hl std">}</span>
+<span class="hl kwa">for</span><span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl kwd">nrow</span><span class="hl std">(revs)){</span>
+  <span class="hl kwa">if</span><span class="hl std">(</span><span class="hl kwd">is.na</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(revs[i,</span><span class="hl num">1</span><span class="hl std">],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%b %d, %Y&quot;</span><span class="hl std">))</span> <span class="hl opt">==</span> <span class="hl num">FALSE</span><span class="hl std">){</span>
+    <span class="hl std">revs</span><span class="hl opt">$</span><span class="hl std">Date[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.character</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(revs</span><span class="hl opt">$</span><span class="hl std">Date[i],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%b %d, %Y&quot;</span><span class="hl std">))</span>
+  <span class="hl std">}</span><span class="hl kwa">else</span><span class="hl std">{</span>
+    <span class="hl std">revs</span><span class="hl opt">$</span><span class="hl std">Date[i]</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.character</span><span class="hl std">(</span><span class="hl kwd">as.Date</span><span class="hl std">(revs</span><span class="hl opt">$</span><span class="hl std">Date[i],</span> <span class="hl kwc">format</span><span class="hl std">=</span><span class="hl str">&quot;%d-%b-%y&quot;</span><span class="hl std">))</span>
+  <span class="hl std">}</span>
+<span class="hl std">}</span>
+
+<span class="hl std">rv</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">merge</span><span class="hl std">(vids, revs,</span> <span class="hl kwc">by</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Date&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;VideoID&quot;</span><span class="hl std">))</span>
+</pre></div>
+</div></div>
+
+<p>Colum adjustments</p>
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#rename columns</span>
+<span class="hl kwd">colnames</span><span class="hl std">(rv)[</span><span class="hl kwd">colnames</span><span class="hl std">(rv)</span><span class="hl opt">==</span><span class="hl str">&quot;Total.earn&quot;</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;daily_earnings&quot;</span>
+<span class="hl kwd">colnames</span><span class="hl std">(rv)[</span><span class="hl kwd">colnames</span><span class="hl std">(rv)</span><span class="hl opt">==</span><span class="hl str">&quot;Avg.view.duration&quot;</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;average_watch_time&quot;</span>
+
+<span class="hl com">#remove dollar signs and make daily_earnings column numeric</span>
+<span class="hl std">rv</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">as.numeric</span><span class="hl std">(</span><span class="hl kwd">gsub</span><span class="hl std">(</span><span class="hl str">&quot;\\$&quot;</span><span class="hl std">,</span><span class="hl str">&quot;&quot;</span><span class="hl std">, rv</span><span class="hl opt">$</span><span class="hl std">daily_earnings))</span>
+
+<span class="hl com">#create earnings per view column</span>
+<span class="hl std">rv</span><span class="hl opt">$</span><span class="hl std">earnings_per_view</span> <span class="hl kwb">&lt;-</span> <span class="hl std">rv</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span><span class="hl opt">/</span><span class="hl std">rv</span><span class="hl opt">$</span><span class="hl std">Views</span>
+
+<span class="hl com">#drop column names we do not need</span>
+<span class="hl std">drop</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;AFV.earn&quot;</span><span class="hl std">,</span><span class="hl str">&quot;YT.earn&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Transactions&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Est.min.watched&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Unq.cookies&quot;</span><span class="hl std">)</span>
+<span class="hl std">rv1</span> <span class="hl kwb">=</span> <span class="hl std">rv[,</span><span class="hl opt">!</span><span class="hl std">(</span><span class="hl kwd">names</span><span class="hl std">(rv)</span> <span class="hl opt">%in%</span> <span class="hl std">drop)]</span> <span class="hl com">#new rv</span>
+</pre></div>
+</div></div>
+
+<p>Merge metadata colums on "Ads and NoAds, visa-versa"</p>
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#merge data with adsinstream.csv (describes pre-roll ads)</span>
+<span class="hl com">#import new csv file</span>
+<span class="hl std">instream</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read.csv</span><span class="hl std">(adinstream)</span>
+<span class="hl kwd">colnames</span><span class="hl std">(instream)[</span><span class="hl kwd">colnames</span><span class="hl std">(instream)</span><span class="hl opt">==</span><span class="hl str">&quot;video.id&quot;</span><span class="hl std">]</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;VideoID&quot;</span>
+
+<span class="hl com">##Instream videoID is poorly name--- rename to match rv1</span>
+<span class="hl std">instream</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">toupper</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID)</span> <span class="hl com">#all convert to upper case</span>
+<span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">toupper</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">VideoID)</span>
+<span class="hl kwd">setdiff</span><span class="hl std">(</span><span class="hl kwd">unique</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">VideoID),</span> <span class="hl kwd">unique</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID))</span> <span class="hl com">#output: &quot;REG1&quot;   &quot;REG2&quot;   &quot;WHATIS&quot; &quot;REG3&quot;  </span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] &quot;REG1&quot;   &quot;REG2&quot;   &quot;WHATIS&quot; &quot;REG3&quot;
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">instream[</span><span class="hl kwd">which</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl opt">==</span> <span class="hl str">&quot;REGRESSION1&quot;</span><span class="hl std">),]</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;REG1&quot;</span>
+<span class="hl std">instream[</span><span class="hl kwd">which</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl opt">==</span> <span class="hl str">&quot;REGRESSION2&quot;</span><span class="hl std">),]</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;REG2&quot;</span>
+<span class="hl std">instream[</span><span class="hl kwd">which</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl opt">==</span> <span class="hl str">&quot;REGRESSION3&quot;</span><span class="hl std">),]</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;REG3&quot;</span>
+<span class="hl std">instream[</span><span class="hl kwd">which</span><span class="hl std">(instream</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl opt">==</span> <span class="hl str">&quot;WHATISINTRO&quot;</span><span class="hl std">),]</span><span class="hl opt">$</span><span class="hl std">VideoID</span> <span class="hl kwb">&lt;-</span> <span class="hl str">&quot;WHATIS&quot;</span>
+
+<span class="hl com">#Merge instream and rv1</span>
+<span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">annoy_before</span> <span class="hl kwb">&lt;-</span> <span class="hl num">NA</span>
+<span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">annoy_after</span> <span class="hl kwb">&lt;-</span> <span class="hl num">NA</span>
+<span class="hl kwa">for</span><span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl opt">:</span><span class="hl kwd">nrow</span><span class="hl std">(rv1)){</span>
+  <span class="hl kwa">if</span><span class="hl std">(</span><span class="hl kwd">is.na</span><span class="hl std">(</span><span class="hl kwd">match</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">VideoID[i], instream</span><span class="hl opt">$</span><span class="hl std">VideoID))</span> <span class="hl opt">==</span> <span class="hl num">FALSE</span><span class="hl std">){</span>
+    <span class="hl std">n</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">match</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">VideoID[i], instream</span><span class="hl opt">$</span><span class="hl std">VideoID)</span>
+    <span class="hl std">rv1[i,</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">7</span><span class="hl std">,</span><span class="hl num">8</span><span class="hl std">)]</span> <span class="hl kwb">&lt;-</span> <span class="hl std">instream[n,</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">3</span><span class="hl std">,</span><span class="hl num">4</span><span class="hl std">)]</span>
+  <span class="hl std">}</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+
+<p>View the data and summary plots</p>
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#Data Summary &amp; Analysis for Daily Earnings:</span>
+<span class="hl kwd">summary</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.0000  0.0100  0.0300  0.1008  0.1000  8.9500
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">sd</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.2338352
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Daily Earnings'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Daily Earnings with Outliers&quot;</span>
+        <span class="hl std">,</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Daily Earnings'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Daily Earnings without Outliers&quot;</span>
+        <span class="hl std">,</span><span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-1.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">hist</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Daily Earnings'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Daily Earnings Distribution&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-2.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl com">#Data Summary &amp; Analysis for Views:</span>
+<span class="hl kwd">summary</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     0.0     8.0    15.0    22.3    28.0   216.0
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">sd</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 22.97595
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Views'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Views with Outliers&quot;</span>
+        <span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Views'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Views without Outliers&quot;</span>
+        <span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-3.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">hist</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Views'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Views Counting&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-4.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl com">#Data Summary &amp; Analysis for Average Watch Time:</span>
+<span class="hl kwd">summary</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   2.310   3.120   3.232   4.000  22.510
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">sd</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 1.47565
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Avg Watch Time'</span>
+        <span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">'Minutes'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg Watch Time with Outliers&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Avg Watch Time'</span>
+        <span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">'Minutes'</span><span class="hl std">,</span> <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg Watch Time without Outliers&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-5.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">hist</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">'Avg Watch Time'</span><span class="hl std">,</span>
+     <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg Watch Time Counting&quot;</span><span class="hl std">,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-6-6.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" class="plot" /></div></div>
+<p>
+</br>
+OBSERVATION::</br>
+Daily Earnings Summary: </br>
+    Mean: 0.1008</br>
+    Standard Deviation: 0.2338 </br>
+    Median: 0.0300 </br></br>
+Daily Earnings shows a few significant outliers, but most of the earnings are under $1/day. The significant skew in this data indicates that most of our income can be attributed to a small number of videos. These outliers do not seem to be typos, but relevant pieces of data that tells us about the skewed nature of our profitability.</br> </br>
+
+Views Summary:</br>
+Mean: 22.3</br>
+Standard Deviation: 22.97595 </br>Median: 15.0</br></br>
+Views are also highly skewed with a long right tail. Notice the heavy right tail have significant impact on the mean as the median is smaller than the average, with the great dispersion between the number of views. Despite the indication of these outliers, we wouldn’t consider removing any data points in this case, because these are not outliers, but an indicator that a few videos are receiving a significantly larger proportion of the views.</br></br>
+
+Average Watch Time Summary:</br>
+Mean: 3.232</br>
+Standard Deviation: 1.47565 </br>Median: 3.120</br></br>
+Average watch time is fairly normally distributed with a mean of 3.2 and a slight right tail. It is centered around a mean of 3.2 indicating a fairly short attention span for our viewers. </br></br>
+
+</br>
+</p>
+
+
+
+
+<p></br></br>PartTwo >>>>> <p>
+<p>
+Use the merged data set you constructed in Part 1 to answer the following questions:</br>
+</br>
+1. During the pre-period (before Feb 5th),</br>
+i) Is average watch time different for videos that have pre-roll ads versus not?</br> ii) Is the number of views different for videos that have pre-roll ads versus not?</br>
+For each comparison, conduct an appropriate hypothesis test, and offer an interpretation in the context of the problem.</br>
+</p>
+
+<p>
+● Is the average watch time different for videos that have pre-roll ads versus not?</br>
+○ H0 = The average watch time is not different with pre-rolls ads versus those that
+do not have pre-roll ads </br>
+○ H1 = The average watch time is different for videos with pre-rolls ads versus
+those that do not have pre-roll ads </br>
+</p>
+
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q1: During the pre-period (before Feb 5th):</span>
+
+<span class="hl com">#Eliminate rows with 1 in both annoy_after &amp; before</span>
+<span class="hl std">rv2</span> <span class="hl kwb">&lt;-</span> <span class="hl std">rv1[</span><span class="hl opt">-</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl kwd">which</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">annoy_before</span><span class="hl opt">==</span><span class="hl num">1</span> <span class="hl opt">&amp;</span> <span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">annoy_after</span><span class="hl opt">==</span><span class="hl num">1</span><span class="hl std">)),]</span>  <span class="hl com">#remove inconsitancy</span>
+<span class="hl std">Q1_pre</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(rv2, Date</span> <span class="hl opt">&lt;</span> <span class="hl str">&quot;2013-02-05&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">annoy_before</span> <span class="hl opt">==</span> <span class="hl str">&quot;1&quot;</span><span class="hl std">)</span>
+<span class="hl std">Q1_no</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(rv2, Date</span> <span class="hl opt">&lt;</span> <span class="hl str">&quot;2013-02-05&quot;</span> <span class="hl opt">&amp;</span> <span class="hl std">annoy_before</span> <span class="hl opt">==</span> <span class="hl str">&quot;0&quot;</span><span class="hl std">)</span>
+
+<span class="hl com">#Unpaired Two-Samples T-test</span>
+<span class="hl kwd">t.test</span><span class="hl std">(Q1_pre</span><span class="hl opt">$</span><span class="hl std">average_watch_time, Q1_no</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  Q1_pre$average_watch_time and Q1_no$average_watch_time
+## t = -8.3977, df = 11217, p-value &lt; 2.2e-16
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.2792857 -0.1735792
+## sample estimates:
+## mean of x mean of y 
+##  3.104515  3.330947
+</pre></div>
+</div></div>
+
+<p>
+OBSERVATION::</br>
+This t-test tells us that we should reject the null hypothesis because the average watch time difference between videos with pre-roll ads and those without pre-roll is statistically significant. With a p-value of less than .001 and a t-test statistic of -8.3977, which translates to the mean of pre-roll average watch time being over 8 standard errors below the dataset mean of no pre-roll average watch time.
+</br></br>
+</p>
+
+<p>
+● Is the number of views different for videos that have pre-roll ads versus not?</br>
+○ H0 = The number of views is not different for videos that have pre-roll ads versus
+not</br>
+○ H1 = The number of views is different for videos that have pre-roll ads versus not
+</p></br>
+<div class="chunk" id="unnamed-chunk-8"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">t.test</span><span class="hl std">(Q1_pre</span><span class="hl opt">$</span><span class="hl std">Views, Q1_no</span><span class="hl opt">$</span><span class="hl std">Views)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  Q1_pre$Views and Q1_no$Views
+## t = -12.159, df = 9896, p-value &lt; 2.2e-16
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -6.006455 -4.338688
+## sample estimates:
+## mean of x mean of y 
+##  20.12362  25.29620
+</pre></div>
+</div></div>
+
+<p>
+OBSERVATION::</br>
+This t-test tells us that we should reject the null hypothesis because the views for videos with pre-roll ads and those without is statistically significant. With a p-value of less than .05 and a t-test statistic of -12.159, we see that the mean of pre-roll views is more than 12 standard errors below the dataset mean of no pre-roll views. Notice that with ads, views and average watch time is more spread out and significantly more right skewed.
+</br></br>
+</p>
+
+<div class="chunk" id="unnamed-chunk-9"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">Q1_plot</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">subset</span><span class="hl std">(rv2, Date</span> <span class="hl opt">&lt;</span> <span class="hl str">&quot;2013-02-05&quot;</span><span class="hl std">)</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(average_watch_time</span><span class="hl opt">~</span><span class="hl std">annoy_before,</span> <span class="hl kwc">data</span><span class="hl std">=Q1_plot,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Avg. Watch Time vs. Pre-roll Ads (Pre-period)&quot;</span>
+        <span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Avg. Watch Time&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Pre-roll Ads&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;No Ads&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Ads&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">boxplot</span><span class="hl std">(Views</span><span class="hl opt">~</span><span class="hl std">annoy_before,</span> <span class="hl kwc">data</span><span class="hl std">=Q1_plot,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Views vs. Pre-roll Ads (Pre-period)&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Views&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Pre-roll Ads&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;No Ads&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Ads&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-9-2.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" class="plot" /></div></div>
+
+<p>
+</br></br>
+2. In the full sample,</br>
+i) How does attention (measured by average watch time) relate to daily earnings on a
+video? Is this relationship statistically significant? </br>
+ii) How do views relate to daily earnings on a video? Is this relationship statistically
+significant? </br>
+iii) How does attention relate to views on a video? Is this relationship statistically significant?</br>
+<p>
+
+<div class="chunk" id="unnamed-chunk-10"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q2:In the full sample:</span>
+<span class="hl com">##Relationship between daily earnings vs. average watch time?</span>
+<span class="hl std">lm_awt</span><span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_awt)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = rv1$daily_earnings ~ rv1$average_watch_time)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.1858 -0.0897 -0.0652  0.0032  8.8464 
+## 
+## Coefficients:
+##                        Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)            0.082214   0.004646  17.697  &lt; 2e-16 ***
+## rv1$average_watch_time 0.005762   0.001308   4.406 1.06e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2337 on 14667 degrees of freedom
+## Multiple R-squared:  0.001322,	Adjusted R-squared:  0.001254 
+## F-statistic: 19.42 on 1 and 14667 DF,  p-value: 1.058e-05
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time,</span>
+     <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg. Watch Time vs. Daily earnings&quot;</span> <span class="hl std">,</span>
+     <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg. Watch Time&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Daily earnings&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span><span class="hl num">20</span><span class="hl std">)</span>
+<span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_awt)[</span><span class="hl num">1</span><span class="hl std">],</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_awt)[</span><span class="hl num">2</span><span class="hl std">],</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">'red'</span><span class="hl std">)</span> <span class="hl com">#reg line</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">2</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(lm_awt)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-10-2.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" class="plot" /></div></div>
+<p>
+OBSERVATION::</br>
+Effect of Average Watch Time on Daily Earnings:</br>    Daily_earnings = 0.082214 + 0.005762*(average_watch_time)</br></br>
+The relationship between these two variables is statistically significant as p-value of the slope is less than 0.05. For every one unit increase in average watch time, there is a 0.00576 dollar increase in daily earning. The intercept is statistically significant with a p-value less than 0.05. The intercept shows that at a watch time of 0 (x=0), daily earnings is predicted to be $0.0822. To us, this indicates that this intercept is meaningless or that youtubers may receive a base amount of compensation for simply uploading a video to their channel. In addition, a R-square of 0.125% indicating that 0.125% of variability in daily earnings can be explained by average watch time.
+</br>
+</p>
+
+
+<div class="chunk" id="unnamed-chunk-11"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Relationship between daily earnings vs. views?</span>
+<span class="hl std">lm_v</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">Views)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_v)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = rv1$daily_earnings ~ rv1$Views)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.6502 -0.0622 -0.0227  0.0165  8.5384 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -3.074e-03  2.392e-03  -1.285    0.199    
+## rv1$Views    4.659e-03  7.471e-05  62.360   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2079 on 14667 degrees of freedom
+## Multiple R-squared:  0.2096,	Adjusted R-squared:  0.2095 
+## F-statistic:  3889 on 1 and 14667 DF,  p-value: &lt; 2.2e-16
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">daily_earnings</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">Views,</span>
+     <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Views vs. Daily earnings&quot;</span> <span class="hl std">,</span> <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Views&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Daily earnings&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span><span class="hl num">20</span><span class="hl std">)</span> <span class="hl com">#eliminate outliers? ylim?</span>
+<span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_v)[</span><span class="hl num">1</span><span class="hl std">],</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_v)[</span><span class="hl num">2</span><span class="hl std">],</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">'red'</span><span class="hl std">)</span> <span class="hl com">#reg line</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">2</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(lm_v)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-11-2.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" class="plot" /></div></div>
+<p>
+OBSERVATION::</br>
+Effect of Views on Daily Earnings:</br>    Daily_earnings = -3.074e-03 + 4.659e-03*(views)</br></br>
+The relationship between these two variables is statistically significant because the p-value is less than 0.05. For every unit increase in views, there is a 4.659e-03 unit increase in daily earnings. The intercept is not statistically significant and is also meaningless because it impossible to have negative daily earnings (y=-3.074e-03 at x=0). In addition, a R-square of .2095 indicates that 20.95% of variability in daily earnings can be explained by views.
+</br>
+</p>
+
+<div class="chunk" id="unnamed-chunk-12"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Relationship between average watch time vs. views?</span>
+<span class="hl std">lm_awt_v</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_awt_v)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = rv1$Views ~ rv1$average_watch_time)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -30.117 -14.007  -6.987   5.835 193.822 
+## 
+## Coefficients:
+##                        Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             20.8245     0.4566  45.610  &lt; 2e-16 ***
+## rv1$average_watch_time   0.4572     0.1285   3.558 0.000375 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 22.97 on 14667 degrees of freedom
+## Multiple R-squared:  0.0008624,	Adjusted R-squared:  0.0007942 
+## F-statistic: 12.66 on 1 and 14667 DF,  p-value: 0.0003749
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">1</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(rv1</span><span class="hl opt">$</span><span class="hl std">Views</span><span class="hl opt">~</span><span class="hl std">rv1</span><span class="hl opt">$</span><span class="hl std">average_watch_time,</span>
+     <span class="hl kwc">main</span> <span class="hl std">=</span> <span class="hl str">&quot;Views vs. Avg. Watch Time&quot;</span> <span class="hl std">,</span> <span class="hl kwc">xlab</span> <span class="hl std">=</span> <span class="hl str">&quot;Avg. Watch Time&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span> <span class="hl std">=</span> <span class="hl str">&quot;Views&quot;</span><span class="hl std">,</span>
+     <span class="hl kwc">lwd</span> <span class="hl std">=</span> <span class="hl num">2</span><span class="hl std">,</span> <span class="hl kwc">pch</span> <span class="hl std">=</span><span class="hl num">20</span><span class="hl std">)</span> <span class="hl com">#eliminate outliers? ylim?</span>
+<span class="hl kwd">abline</span><span class="hl std">(</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_awt_v)[</span><span class="hl num">1</span><span class="hl std">],</span><span class="hl kwd">coefficients</span><span class="hl std">(lm_awt_v)[</span><span class="hl num">2</span><span class="hl std">],</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">'red'</span><span class="hl std">)</span> <span class="hl com">#reg line</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">2</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">plot</span><span class="hl std">(lm_awt_v)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-12-2.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" class="plot" /></div></div>
+<p>
+OBSERVATION::</br>
+Effect of Average Watch Time on Views:</br>    Views = 20.8245 + 0.4572*(average_watch_time)</br></br>
+The relationship between these two variables is statistically significant because the p-value is less than 0.05. For every one unit increase in average watch time, there is a 0.4572 unit increase in views. The intercept is statistically significant and meaningful with p-value less than 0.05. For an average watch time of 0 (x=0), there will be 20.82 views on average. This make sense because it is fairly common to click on a video by mistake and then quickly leave the video, registering a view but a watch time of zero. In addition, a R-square of .000794 indicates that 0.0794% of the variability in views can be explained by average watch time.
+</br>
+</p>
+
+
+<p>
+</br></br>
+3. Define a date-level variable (named “post”) that equals whether the date is during the post period (Feb 5 or later, = 1) or during the pre period (Feb 4 or earlier, =0). Using this variable and regression tools, estimate the specification:</br>
+</br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑝𝑜𝑠𝑡- + 𝜖,-
+</br></br>
+
+For your estimate of 𝛽2, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<div class="chunk" id="unnamed-chunk-13"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q3:</span>
+<span class="hl com">##Relationship between post vs. daily earnings?</span>
+<span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">post</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(rv2</span><span class="hl opt">$</span><span class="hl std">Date</span> <span class="hl opt">&lt;</span> <span class="hl str">&quot;2013-02-05&quot;</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">,</span> <span class="hl num">1</span><span class="hl std">)</span>
+<span class="hl std">lm_p</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">post,</span> <span class="hl kwc">data</span><span class="hl std">=rv2)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_p)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = daily_earnings ~ post, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.1042 -0.0942 -0.0642  0.0058  8.8458 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.104190   0.002192  47.526  &lt; 2e-16 ***
+## post        -0.022166   0.004738  -4.678 2.92e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2338 on 14466 degrees of freedom
+## Multiple R-squared:  0.00151,	Adjusted R-squared:  0.001441 
+## F-statistic: 21.88 on 1 and 14466 DF,  p-value: 2.923e-06
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Post on Daily Earnings:</br>
+     Daily_earnings = 0.104190 - 0.022166*(post)</br></br>
+The impact of post on daily earnings is significant with a p-value less than 0.05, indicating that there is a difference in daily earnings between pre and post period. The statistically significant intercept shows that the average daily earning before February 5th is 0.104, while the average daily earnings decrease by 0.0221 after February 5th. This decrease in daily earnings can be attributed to significant outliers in daily earning before February 5th which significantly increased the overall average earnings. R-squared of .00144 indicates that 0.144% of variability in daily earnings can be explained by pre/ post-period.</br>
+In addition, the great difference in the sample size of pre (n=11371) and post period (n=3097) may have unpredictable impact the linear regression model.
+</p>
+<div class="chunk" id="unnamed-chunk-14"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">par</span><span class="hl std">(</span><span class="hl kwc">mfrow</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl std">,</span><span class="hl num">2</span><span class="hl std">))</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">post,</span> <span class="hl kwc">data</span><span class="hl std">=rv2,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings vs. Pre &amp; Post Period (without outliers)&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Pre &amp; Post Period&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Before Feb 5th&quot;</span><span class="hl std">,</span><span class="hl str">&quot;After Feb 5th&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+<span class="hl kwd">boxplot</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">post,</span> <span class="hl kwc">data</span><span class="hl std">=rv2,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings vs. Pre &amp; Post Period (with outliers)&quot;</span><span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Pre &amp; Post Period&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Before Feb 5th&quot;</span><span class="hl std">,</span><span class="hl str">&quot;After Feb 5th&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-14-1.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" class="plot" /></div></div>
+
+<p>
+</br></br>
+4. Define a video-level variable (named “annoy_later”) that equals whether a video went from no
+pre-roll advertisements to pre-roll advertisements in the post period (=1 if no pre-rollàpre-roll, =0 otherwise). Using this variable and regression tools, estimate the specification:</br></br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟, + 𝜖,-
+
+</br>For your estimate of 𝛽2, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<div class="chunk" id="unnamed-chunk-15"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q4</span>
+<span class="hl com">##Relationship between annoy later vs. daily earnings?</span>
+<span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">ifelse</span><span class="hl std">(rv2</span><span class="hl opt">$</span><span class="hl std">annoy_before</span><span class="hl opt">==</span><span class="hl num">0</span> <span class="hl opt">&amp;</span> <span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_after</span><span class="hl opt">==</span><span class="hl num">1</span><span class="hl std">,</span> <span class="hl num">1</span><span class="hl std">,</span> <span class="hl num">0</span><span class="hl std">)</span>
+<span class="hl std">lm_al</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_al)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = daily_earnings ~ annoy_later, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.1242 -0.0842 -0.0589  0.0011  8.8258 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 0.068878   0.002886   23.87   &lt;2e-16 ***
+## annoy_later 0.055371   0.003884   14.26   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2323 on 14466 degrees of freedom
+## Multiple R-squared:  0.01385,	Adjusted R-squared:  0.01379 
+## F-statistic: 203.2 on 1 and 14466 DF,  p-value: &lt; 2.2e-16
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Annoy Later on Daily Earnings:</br>
+      daily earnings = 0.068878 + 0.055371*(annoy_later)</br></br>
+The impact of annoy_later on daily earnings was significant with a p-value of less than 0.05, indicating that there is a difference in daily earnings when videos went from no
+pre-roll advertisements to pre-roll advertisements and pre-roll advertisements to no pre-roll advertisements during the post period. In the other words, on average, the videos that were selected to run ads before Feb 5th are less profitable than those after Feb 5th. The statistically significant intercept shows that the average daily earning for videos chosen to pre-roll ads in pre-period is 0.0688, while the average daily earnings increase by 0.0553 for those have pre-roll ads in post-period. In addition, R-squared of 0.0137 indicates that 1.37% of variability in daily earnings can be explained by the time period of when the ads were shown (annoy later or before).
+</p>
+<div class="chunk" id="unnamed-chunk-16"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">boxplot</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings vs. Annoy Later/ Before (W/O Outliers)&quot;</span>
+        <span class="hl std">,</span> <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Annoy Later/ Before&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Annoy before&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Annoy later&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-16-1.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" class="plot" /></div><div class="rcode">
+<div class="source"><pre class="knitr r"><span class="hl kwd">boxplot</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2,</span> <span class="hl kwc">col</span><span class="hl std">=</span><span class="hl str">&quot;light blue&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">main</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings vs. Annoy Later/ Before (W/ Outliers)&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">ylab</span><span class="hl std">=</span><span class="hl str">&quot;Daily Earnings&quot;</span><span class="hl std">,</span> <span class="hl kwc">xlab</span><span class="hl std">=</span><span class="hl str">&quot;Annoy Later/ Before&quot;</span><span class="hl std">,</span>
+        <span class="hl kwc">names</span><span class="hl std">=</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;Annoy before&quot;</span><span class="hl std">,</span><span class="hl str">&quot;Annoy later&quot;</span><span class="hl std">),</span> <span class="hl kwc">notch</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">outline</span> <span class="hl std">=</span> <span class="hl num">TRUE</span><span class="hl std">)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-16-2.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" class="plot" /></div></div>
+
+
+<p>
+</br></br>
+5. Putting the previous two parts together, estimate the following multiple regression equation specification:</br></br>
+𝑑𝑎𝑖𝑙𝑦_𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑠,- = 𝛽0 + 𝛽2𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟, + 𝛽7𝑝𝑜𝑠𝑡- + 𝛽8𝑎𝑛𝑛𝑜𝑦_𝑙𝑎𝑡𝑒𝑟,×𝑝𝑜𝑠𝑡- + 𝜖,-
+</br>For your estimate of 𝛽8, is this estimate statistically significant? Interpret this estimate in the context of the problem.</br>
+</p>
+<div class="chunk" id="unnamed-chunk-17"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q5</span>
+<span class="hl com">##Relationship between annoy later, post, and their interaction vs. daily earnings?</span>
+<span class="hl std">lm_pal</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">lm</span><span class="hl std">(daily_earnings</span><span class="hl opt">~</span><span class="hl std">post</span><span class="hl opt">*</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2)</span>
+<span class="hl kwd">summary</span><span class="hl std">(lm_pal)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = daily_earnings ~ post * annoy_later, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.1343 -0.0770 -0.0570  0.0030  8.8157 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)       0.066961   0.003251  20.599  &lt; 2e-16 ***
+## post              0.008918   0.007012   1.272    0.203    
+## annoy_later       0.067377   0.004373  15.407  &lt; 2e-16 ***
+## post:annoy_later -0.056208   0.009449  -5.949 2.76e-09 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2319 on 14464 degrees of freedom
+## Multiple R-squared:  0.01775,	Adjusted R-squared:  0.01755 
+## F-statistic: 87.13 on 3 and 14464 DF,  p-value: &lt; 2.2e-16
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Post and Annoy Later (and interaction) on Daily Earnings:</br>
+        Daily_Earnings = 0.066961 + 0.008918(post)+0.067377*(annoy_later)-0.056208*(post)*(annoy_later)</br></br>
+With the multiple regression model, the main effect of annoy later is statistically significant (p < 0.05) while the main effect of post is not. This indicates that, on average, the videos that were selected to run ads before Feb 5th make $0.0673 less than those run after Feb 5th. In previous linear regression models such as #3, the relationship shows that pre-period generates more profit than post-period, but in this model the effect of post is statistically insignificant so there is no real difference in daily earnings between videos before or after Feb 5th. However, once we combine post with annoy later, they jointly provide an explanation for daily earnings even if we do not have the statistical power to disentangle their individual effects here. </br>
+An R-squared of .0175, indicates that the two variables, annoy later and post together can explain 1.75% of the variability in daily earnings. In summary, videos without ads before Feb 5th generate highest daily earnings ($0.134), followed by videos with ads after Feb 5th ($0.0870), followed by videos with ads after Feb 5th ($0.0758) and finally without ads before Feb 5th ($0.0669).
+</br></br>
+<table style="width:100%">
+  <tr>
+    <th>Daily Earnings</th>
+    <th>Post = 0 (Before feb 5th)</th> 
+    <th>Post = 1 (After feb 5th)</th>
+    <th>Sum across the row</th>
+  </tr>
+  <tr>
+    <td>Annoy_later = 0 (Ads during pre-period)</td>
+    <td>0.0669 (Ads)</td> 
+    <td>0.0758 (No Ads)</td>
+    <td>0.1427</td>
+  </tr>
+  <tr>
+    <td>Annoy_later = 1 (Ads during post-period)</td>
+    <td>0.134 (No Ads)</td> 
+    <td>0.0870 (Ads)</td>
+    <td>0.221</td>
+  </tr>
+  <tr>
+    <td>Sum across the column</td>
+    <td>0.201</td> 
+    <td>0.162</td>
+    <td></td>
+  </tr>
+</table>
+</p>
+
+
+<p></br></br>
+</br>6. For Questions 3, 4, and 5, please repeat the analysis, but using 𝑎𝑣𝑒𝑟𝑎𝑔𝑒_𝑤𝑎𝑡𝑐h _𝑡𝑖𝑚𝑒 as the dependent variable, instead of daily earnings.
+</br>
+</p>
+<div class="chunk" id="unnamed-chunk-18"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##Q6: average_watch_time and how each variable impacts it</span>
+<span class="hl kwd">summary</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(average_watch_time</span><span class="hl opt">~</span><span class="hl std">post,</span> <span class="hl kwc">data</span><span class="hl std">=rv2))</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = average_watch_time ~ post, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.3483 -0.9096 -0.1189  0.7604 19.1617 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  3.22963    0.01376 234.705  &lt; 2e-16 ***
+## post         0.11862    0.02974   3.988 6.68e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.467 on 14466 degrees of freedom
+## Multiple R-squared:  0.001098,	Adjusted R-squared:  0.001029 
+## F-statistic: 15.91 on 1 and 14466 DF,  p-value: 6.682e-05
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Post on Average Watch time:</br>
+      Average Watch Time = 3.22963 + 0.11862*(post)</br></br>
+The impact of post on average watch time was significant with a p-value less than 0.05, indicating that there is a difference in average watch time between the pre and post periods. The statistically significant intercept shows that the average watch time before February 5th is 3.22, while the average watch time increased by 0.11862 after February 5th. This might indicate that as time passed, the channel started to grab more attention. An R-squared of .00103 indicates that 0.103% of variability in average watch time can be explained by timing.
+</p>
+<div class="chunk" id="unnamed-chunk-19"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(average_watch_time</span><span class="hl opt">~</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2))</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = average_watch_time ~ annoy_later, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.3416 -0.9216 -0.1216  0.7584 19.3617 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  3.14827    0.01820 173.005  &lt; 2e-16 ***
+## annoy_later  0.19337    0.02449   7.895 3.11e-15 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.465 on 14466 degrees of freedom
+## Multiple R-squared:  0.004291,	Adjusted R-squared:  0.004222 
+## F-statistic: 62.33 on 1 and 14466 DF,  p-value: 3.105e-15
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Annoy Later on Average Watch time:</br>
+      average_watch_time = 3.14827 + 0.19337*(annoy_later)</br></br>
+The impact of annoy_later on average watch time was significant with a p-value less than 0.05, indicating that there is a difference in average watch time between videos that transitioned from no pre-roll advertisements to pre-roll advertisements and vice versa during the post period. This means that on average, the videos that were selected to run ads before Feb 5th attract more attention than those after Feb 5th. The intercept shows that the average watch time for videos chosen to run pre-roll ads in the pre-period is 3.14, while the average watch time increases by 0.193 for those that have pre-roll ads in post-period. In addition, an R-squared of .00422 indicates that 0.422% of variability in average watch time can be explained by annoy later or before.
+</p>
+<div class="chunk" id="unnamed-chunk-20"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">summary</span><span class="hl std">(</span><span class="hl kwd">lm</span><span class="hl std">(average_watch_time</span><span class="hl opt">~</span><span class="hl std">post</span><span class="hl opt">*</span><span class="hl std">annoy_later,</span> <span class="hl kwc">data</span><span class="hl std">=rv2))</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## lm(formula = average_watch_time ~ post * annoy_later, data = rv2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.3811 -0.9119 -0.1209  0.7591 19.2019 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)       3.10451    0.02052 151.267  &lt; 2e-16 ***
+## post              0.20358    0.04427   4.599 4.29e-06 ***
+## annoy_later       0.22643    0.02761   8.201 2.58e-16 ***
+## post:annoy_later -0.15345    0.05965  -2.572   0.0101 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.464 on 14464 degrees of freedom
+## Multiple R-squared:  0.005852,	Adjusted R-squared:  0.005646 
+## F-statistic: 28.38 on 3 and 14464 DF,  p-value: &lt; 2.2e-16
+</pre></div>
+</div></div>
+<p>
+OBSERVATION::</br>
+Effect of Post and Annoy Later (and interaction) on Average Watch Time:</br>
+      Average_watch_time =3.10451 +0.20358*(post) + 0.22643*(annoy_later) - 0.15345*(post)*(annoy_later)</br></br>
+With the multiple regression model, all important variables are statistically significant (p < 0.05), including the interaction between annoy later and post. While the main effect of post and annoy later preserved the pattern observed in previous linear regression model, this model helps us identify the best and worst scenarios for achieving the highest watch time. Videos with ads after Feb 5th attracted most attention (3.381), follow by videos without ads before Feb 5th (3.33)and the videos without ads after Feb 5th (3.308), and finally, the videos with ads before Feb 5th attracted the least attention (3.104).
+</br></br>
+
+<table style="width:100%">
+  <tr>
+    <th>Average Watch Time</th>
+    <th>Post = 0 (Before feb 5th)</th> 
+    <th>Post = 1 (After feb 5th)</th>
+    <th>Sum across the row</th>
+  </tr>
+  <tr>
+    <td>Annoy_later = 0 (Ads during pre-period)</td>
+    <td>3.104 (Ads)</td> 
+    <td>3.308 (No Ads)</td>
+    <td>6.41</td>
+  </tr>
+  <tr>
+    <td>Annoy_later = 1 (Ads during post-period)</td>
+    <td>3.33 (No Ads)</td> 
+    <td>3.381 (Ads)</td>
+    <td>7.14</td>
+  </tr>
+  <tr>
+    <td>Sum across the column</td>
+    <td>6.43</td> 
+    <td>6.68</td>
+    <td></td>
+  </tr>
+</table>
+</br>
+</p>
+<div class="chunk" id="unnamed-chunk-21"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">interaction.plot</span><span class="hl std">(rv2</span><span class="hl opt">$</span><span class="hl std">post, rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later, rv2</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure3/unnamed-chunk-21-1.png" title="plot of chunk unnamed-chunk-21" alt="plot of chunk unnamed-chunk-21" class="plot" /></div></div>
+
+<p></br></br>PartThree >>>>> <p>
+<p>Report. Your report should provide the relevant tradeoffs for a YouTube content provider who is interested in knowing whether pre-roll advertisements will increase daily earnings, but is worried that these advertisements might reduce the amount of attention that users pay to the videos the content provider posts. If there is a significant loss of attention to the content, how much additional revenue can the content provider expect to receive to compensate for this? Please organize your discussion, graphs, and tables in a manner that is straightforward to understand for this YouTuber (who remembers loosely what a p-value is from a years-ago stats class).</p>
+<div class="chunk" id="unnamed-chunk-22"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">#data</span>
+<span class="hl std">ads</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rbind</span><span class="hl std">(rv2[rv2</span><span class="hl opt">$</span><span class="hl std">post</span><span class="hl opt">==</span><span class="hl num">0</span> <span class="hl opt">&amp;</span> <span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later</span><span class="hl opt">==</span><span class="hl num">0</span><span class="hl std">,]</span>
+             <span class="hl std">, rv2[rv2</span><span class="hl opt">$</span><span class="hl std">post</span><span class="hl opt">==</span><span class="hl num">1</span> <span class="hl opt">&amp;</span> <span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later</span><span class="hl opt">==</span><span class="hl num">1</span><span class="hl std">,])</span>
+<span class="hl std">no_ads</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">rbind</span><span class="hl std">(rv2[rv2</span><span class="hl opt">$</span><span class="hl std">post</span><span class="hl opt">==</span><span class="hl num">1</span> <span class="hl opt">&amp;</span> <span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later</span><span class="hl opt">==</span><span class="hl num">0</span><span class="hl std">,]</span>
+                <span class="hl std">, rv2[rv2</span><span class="hl opt">$</span><span class="hl std">post</span><span class="hl opt">==</span><span class="hl num">0</span> <span class="hl opt">&amp;</span> <span class="hl std">rv2</span><span class="hl opt">$</span><span class="hl std">annoy_later</span><span class="hl opt">==</span><span class="hl num">1</span><span class="hl std">,])</span>
+
+<span class="hl com">#Test to see if there is a diff in daily earnings, views, avg. watch time</span>
+<span class="hl kwd">t.test</span><span class="hl std">(ads</span><span class="hl opt">$</span><span class="hl std">daily_earnings, no_ads</span><span class="hl opt">$</span><span class="hl std">daily_earnings)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  ads$daily_earnings and no_ads$daily_earnings
+## t = -13.685, df = 13366, p-value &lt; 2.2e-16
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.05913804 -0.04431981
+## sample estimates:
+##  mean of x  mean of y 
+## 0.07200088 0.12372981
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">t.test</span><span class="hl std">(ads</span><span class="hl opt">$</span><span class="hl std">Views, no_ads</span><span class="hl opt">$</span><span class="hl std">Views)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  ads$Views and no_ads$Views
+## t = -8.7651, df = 13295, p-value &lt; 2.2e-16
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -4.005293 -2.541287
+## sample estimates:
+## mean of x mean of y 
+##  20.40297  23.67626
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">t.test</span><span class="hl std">(ads</span><span class="hl opt">$</span><span class="hl std">average_watch_time, no_ads</span><span class="hl opt">$</span><span class="hl std">average_watch_time)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## 	Welch Two Sample t-test
+## 
+## data:  ads$average_watch_time and no_ads$average_watch_time
+## t = -6.2885, df = 14432, p-value = 3.298e-10
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.2005595 -0.1052409
+## sample estimates:
+## mean of x mean of y 
+##    3.1739    3.3268
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl com">###global adjustments start 2</span>
+<span class="hl kwd">options</span><span class="hl std">(</span><span class="hl kwc">warn</span> <span class="hl std">= oldwarnval)</span> <span class="hl com">#reset the warning message</span>
+<span class="hl com">###global adjustments end 2</span>
+</pre></div>
+</div></div>
+<p>
+CONCLUSION::</br>
+After reviewing the data, we believe we have come to several conclusions that a YouTuber can use to guide his or her decisions regarding pre-roll ads running on a channel. In general for all videos, we determined that introducing pre-roll ads when none were present decreases daily earnings, views, and average watch time (this difference is statistically significant across all variables). The magnitude of this impact varies based on other factors such as annoy later and post so more nuance can be gained from studying a particular set of users (viewers interested in economics and statistics videos may not display the same trends as those interested in popular culture). Overall, a YouTuber should think carefully about introducing ads where there were none playing before.
+
+</br></br>
+
+In general, we believe that this dataset is limited due to the following reasons: First, the videos are not popular enough to observe true differences between videos, and the statistical significance levels can be attributed more to the large sample size rather than differences in the success of videos. In addition, having low R-squared values across all analysis is concerning because it does not provide insight to where the majority of the variability is coming from for daily earnings and average watch time. There are a lot of other factors that should be explored here. Regardless of the R-square, the significant coefficients still represent the mean change in the dependent variable for one unit of change in predictor. However, notice that the R-square is so low that we won’t be able to make any precise prediction, but can predict general pattern.</br></br>
+Additionally, one possible confounding factor in the design of the experiment is the unequal sample size across comparison group. When analyzing the effect of the post, pre-period group contains approximately 7000 more samples than post-period, which may be a potential confounding factor.</br></br>
+Despite these limitations in the data, we can still use the insights from this data for help in designing future studies and making limited connections between variables that YouTubers will be interested in.</br></br>
+</p>
+
+</p></br></br>Thank you!</br></p>
+</body>
+</html>
